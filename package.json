@@ -1,0 +1,19 @@
+{
+  "name": "project7_es",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "big-number": "^2.0.0",
+    "openzeppelin-solidity": "^2.3.0",
+    "web3": "^1.2.1"
+  }
+}

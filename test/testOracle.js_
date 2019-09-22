@@ -1,0 +1,90 @@
+//let OracleManagement = artifacts.require("OracleManagement");
+//var Test = require('../config/testConfig.js');
+let FlightSuretyData = artifacts.require("FlightSuretyData");
+let FlightSuretyApp = artifacts.require("FlightSuretyApp");
+
+
+const STATUS_CODE_UNKNOWN = 0;
+const STATUS_CODE_ON_TIME = 10;
+const STATUS_CODE_LATE_AIRLINE = 20;
+const STATUS_CODE_LATE_WEATHER = 30;
+const STATUS_CODE_LATE_TECHNICAL = 40;
+const STATUS_CODE_LATE_OTHER = 50;
+
+//const TEST_ORACLES_COUNT = 20;
+
+contract('Test FlightSuretyApp', function(accounts){
+    const contractOwner = accounts[0];
+    const firstAirline = accounts[1];
+    const flight = 'ND1309'; // Course number
+    const timestamp = Math.floor(Date.now() / 1000);
+    before('setup contract', async () => {
+        this.flightSuretyData = await FlightSuretyData.new({from:contractOwner});
+        this.contract = await FlightSuretyApp.new(FlightSuretyData.address, {from:contractOwner});
+        await this.contract.registerAirline("The First Airline", "01", {from:firstAirline});
+        const balance = await web3.eth.getBalance(firstAirline);
+        console.log(`Balance (in wei) of first airline: ${balance}`);
+        console.log(`Required wei: ${web3.utils.toWei('10')}`);
+        console.log(`Could fund? ${balance>=web3.utils.toWei('10')}`);
+        const minFund = await flightSuretyData.MIN_FUND.call();
+        console.log(`Minium fund: ${minFund}`);
+        //const fundFee = 10;
+        //const fundFeeWei = web3.utils.toWei(fundFee.toString());
+        //await this.contract.airlineFund(fundFeeWei, {from:firstAirline});
+    });
+
+    it(`Test oracles register`, async()=>{
+        const registerFee = await this.contract.REGISTRATION_FEE.call();
+        const registerFeeWei = parseInt(registerFee.toString());
+
+        var oracleIndexes;
+        for (let i=11; i<30; i++){
+            try {
+                await this.contract.registerOracle({from:accounts[i], value:registerFeeWei});
+                oracleIndexes = await this.contract.getMyIndexes({from:accounts[i]});
+                console.log(`Oracle-${i} ${accounts[i]}: ${oracleIndexes[0].toString()}, ${oracleIndexes[1].toString()}, ${oracleIndexes[2].toString()}`);
+            } catch(err) {
+                console.log("Error on registerOracle(): "+err.message);
+                assert.fail(`Error at ${i}-oracle: ${err.message}`);
+            }
+        }
+    });
+
+    it(`Test request flight status`, async ()=>{
+        // ARRANGE
+
+        // Submit a request for oracles to get status information for a flight
+        await this.contract.fetchFlightStatus(firstAirline, flight, timestamp, {from:accounts[0]});
+        /*
+        let allResponseKeys = await this.contract.getAllResponseKeys.call();
+        console.log(allResponseKeys);
+        */
+        let oracleRequestEvent = await this.contract.getPastEvents('OracleRequest',{fromBlock: 0, toBlock: 'latest'});
+        let fetchIndex = parseInt(oracleRequestEvent[0].returnValues.index);
+        console.log(`Fetching index: ${fetchIndex}`);
+        
+        var oracleIndexes;
+        for(let i=11; i<30; i++){
+            oracleIndexes = await this.contract.getMyIndexes({from:accounts[i]});
+            //console.log(`Oracle-${i} ${accounts[i]}: ${oracleIndexes[0].toString()}, ${oracleIndexes[1].toString()}, ${oracleIndexes[2].toString()}`);
+            for (let idx=0; idx<3; idx++){
+                try{
+                    await this.contract.submitOracleResponse(oracleIndexes[idx], firstAirline, flight, timestamp, STATUS_CODE_ON_TIME, {from: accounts[i]});
+                    console.log(`Oracle-${i} submit successfully`);
+                } catch(err){
+                    //console.log('\nError', idx, oracleIndexes[idx].toNumber(), flight, timestamp);
+                    if (oracleIndexes[idx] == fetchIndex) {
+                        assert.fail(`Cannot submitOracleResponse when oracle-index is same as fetch index at i=${i} with idx=${idx} where fetchIndex=${fetchIndex} and oracleIndex=${oracleIndexes[idx]}`);
+                    }
+                }
+            }
+        }
+        //OracleReport
+        let oracleReportEvent = await this.contract.getPastEvents('OracleRequest',{fromBlock: 0, toBlock: 'latest'});
+        console.log("Oracle Report Event:");
+        console.log(oracleReportEvent);  
+        let flightStatusInfoEvent = await this.contract.getPastEvents('FlightStatusInfo',{fromBlock: 0, toBlock: 'latest'});   
+        console.log("Flight Status Info Event:");
+        console.log(flightStatusInfoEvent);
+    });
+});
