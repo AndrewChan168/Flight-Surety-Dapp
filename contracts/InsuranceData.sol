@@ -55,8 +55,8 @@ contract InsuranceData{
         return insurances[_insuranceKey].buyer == _candidate;
     }
 
-    modifier requireBuyer(bytes32 _insuranceKey){
-        require(isBuyer(_insuranceKey, msg.sender), "Only buyer of insurance could withdraw credit");
+    modifier requireBuyer(bytes32 _insuranceKey, address buyer){
+        require(isBuyer(_insuranceKey, buyer), "Only buyer of insurance could withdraw credit");
         _;
     }
 
@@ -64,8 +64,8 @@ contract InsuranceData{
         return insurances[_insuranceKey].airline == _candidate;
     }
 
-    modifier requireAirline(bytes32 _insuranceKey){
-        require(isAirline(_insuranceKey, msg.sender), "Only airline of insurance could pay insurance");
+    modifier requireAirline(bytes32 _insuranceKey, address _airline){
+        require(isAirline(_insuranceKey, _airline), "Only airline of insurance could pay insurance");
         _;
     }
 
@@ -73,14 +73,15 @@ contract InsuranceData{
         insurances[_insuranceKey].status = InsuranceStatus.Withdrawn;
     }
 
-    function buyInsurance(bytes32 _flightKey, address _airline, uint256 _contractTimestamp) public payable returns(bytes32 _insuranceKey){
+    function buyInsurance(bytes32 _flightKey, address _airline, uint256 _contractTimestamp, address _buyer, uint256 _fee) public payable returns(bytes32 _insuranceKey){
         //uint256 _contractTimestamp = now;
-        _insuranceKey = generateInsuranceKey(msg.sender, _flightKey, _contractTimestamp);
+        address payable _payableBuyer = address(uint160(_buyer));
+        _insuranceKey = generateInsuranceKey(_buyer, _flightKey, _contractTimestamp);
         Insurance memory insurance;
-        insurance.buyer = msg.sender;
+        insurance.buyer = _payableBuyer;
         insurance.flightKey = _flightKey;
         insurance.airline = _airline;
-        insurance.fee = msg.value;
+        insurance.fee = _fee;
         insurance.credits = 0;
         insurance.contractTimestamp = _contractTimestamp;
         insurance.status = InsuranceStatus.Activated;
@@ -98,7 +99,7 @@ contract InsuranceData{
         result = input + input/2;
     }
 
-    function payInsurance(bytes32 _insuranceKey) public payable requireAirline(_insuranceKey){
+    function payInsurance(bytes32 _insuranceKey, address _airline) public payable requireAirline(_insuranceKey, _airline){
         uint256 payment = insurances[_insuranceKey].credits;
         insurances[_insuranceKey].credits = 0;
         address payable insuree = insurances[_insuranceKey].buyer;
@@ -106,13 +107,14 @@ contract InsuranceData{
         insuree.transfer(payment);
     }
 
-    function queryInsuranceInfo(bytes32 _insuranceKey) public view returns(address buyer, bytes32 flightKey, address airline, uint256 fee, uint256 credits, uint256 contractTimestamp, InsuranceStatus returnStatus) {
+    function queryInsuranceInfo(bytes32 _insuranceKey) public view returns(address buyer, bytes32 flightKey, address airline, uint256 fee, uint256 credits, uint256 contractTimestamp, InsuranceStatus insuranceStatus) {
         buyer = insurances[_insuranceKey].buyer;
         flightKey = insurances[_insuranceKey].flightKey;
         airline = insurances[_insuranceKey].airline;
         fee = insurances[_insuranceKey].fee;
         credits = insurances[_insuranceKey].credits;
         contractTimestamp = insurances[_insuranceKey].contractTimestamp;
-        returnStatus = insurances[_insuranceKey].status;
+        //returnStatus = insurances[_insuranceKey].status;
+        insuranceStatus = insurances[_insuranceKey].status;
     }
 }

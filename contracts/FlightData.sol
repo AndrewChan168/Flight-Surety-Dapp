@@ -42,14 +42,13 @@ contract FlightData{
         _;
     }
     
-    function addFlight(string memory _code, uint256 _timestamp) internal returns (bytes32 flightKey){
-        //id = flightID;
+    function addFlight(string memory _code, uint256 _timestamp, address _airline) internal returns (bytes32 flightKey){
         flightKey = generateFlightKey(_code, _timestamp);
         require(!isFlightExist(flightKey), "Flight has been registered before");
         bytes32[] memory emptyList;
         Flight memory flight;
         flight.code = _code;
-        flight.airline = msg.sender;
+        flight.airline = _airline;
         flight.timestamp = _timestamp;
         flight.status = FlightStatus.Registered;
         flight.isExist = true;

@@ -23,12 +23,64 @@ contract OracleManagement{
         address requester; 
         bool isOpen;
         mapping(uint8 => address[]) responses;
+        mapping(address => uint8) responsedRecords;
+        address[] responsedOracles;
+        bool isExist;
+        uint8 statusCode;
     }
     
     // Track all oracle responses
     // Key = hash(index, flight, timestamp)
     mapping(bytes32 => ResponseInfo) internal oracleResponses;
-    
+
+    bytes32[] internal allResponseKeys;
+
+    function isResponseExist(bytes32 responseKey) public view returns(bool){
+        return oracleResponses[responseKey].isExist;
+    }
+
+    modifier requireResponseExist(bytes32 responseKey){
+        require(isResponseExist(responseKey), "ResponseInfo doesn't exist");
+        _;
+    }
+
+    function isResponseOpen(bytes32 responseKey) public view returns(bool){
+        return oracleResponses[responseKey].isOpen;
+    }
+
+    function setResponseClose(bytes32 responseKey, uint8 _statusCode) internal {
+        if (oracleResponses[responseKey].isOpen = true){
+            oracleResponses[responseKey].isOpen = false;
+            oracleResponses[responseKey].statusCode = _statusCode;
+        }
+    }
+
+    function createResponseInfo(bytes32 responseKey, address _requester) internal{
+        require(!isResponseExist(responseKey), "ResponseInfo created before");
+        ResponseInfo memory responseInfo;
+        responseInfo.requester = _requester;
+        responseInfo.isOpen = true;
+        responseInfo.isExist = true;
+        oracleResponses[responseKey] = responseInfo;
+    }
+
+    function addOneResponse(bytes32 responseKey, address oracle, uint8 responsedCode) internal requireResponseExist(responseKey){
+        oracleResponses[responseKey].responses[responsedCode].push(oracle);
+        oracleResponses[responseKey].responsedRecords[oracle] = responsedCode;
+        oracleResponses[responseKey].responsedOracles.push(oracle);
+    }
+
+    function queryResponseInfo(bytes32 _fetchKey) public view 
+        returns(address requester, bool isOpen, address[] memory responsedOracles, uint8 statusCode){
+            requester = oracleResponses[_fetchKey].requester;
+            isOpen = oracleResponses[_fetchKey].isOpen;
+            responsedOracles = oracleResponses[_fetchKey].responsedOracles;
+            statusCode = oracleResponses[_fetchKey].statusCode;
+    }
+     
+    function getAllResponseKeys() public view returns(bytes32[] memory){
+        return allResponseKeys;
+    }
 
     event OracleReport(address airline, string flight, uint256 timestamp, uint8 status);
     
@@ -37,7 +89,7 @@ contract OracleManagement{
     // they fetch data and submit a response
     event OracleRequest(uint8 index, address airline, string flight, uint256 timestamp);
     
-    function getMyIndexes() view public returns(uint8[3] memory) {
+    function getMyIndexes() public view returns(uint8[3] memory) {
         require(oracles[msg.sender].isRegistered, "Not registered as an oracle");
         return oracles[msg.sender].indexes;
     }
@@ -75,17 +127,13 @@ contract OracleManagement{
     }
     
     // Register an oracle with the contract
-    function registerOracle() public payable{
+    function registerOracle() external payable{
         // Require registration fee
         require(msg.value >= REGISTRATION_FEE, "Registration fee is required");
         
         uint8[3] memory indexes = generateIndexes(msg.sender);
         
-        //oracles[msg.sender] = Oracle({isRegistered: true, indexes: indexes});
-        Oracle memory oracle;
-        oracle.isRegistered = true;
-        oracle.indexes = indexes;
-        oracles[msg.sender] = oracle;
+        oracles[msg.sender] = Oracle({isRegistered: true, indexes: indexes});
     }
 
     function queryOracle(address oracleAddress) public view returns(bool isRegistered, uint8[3] memory indexes){

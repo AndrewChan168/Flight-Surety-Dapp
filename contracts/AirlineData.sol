@@ -2,6 +2,7 @@ pragma solidity ^0.5.8;
 
 import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+
 contract AirlineData{
     uint256 constant public MIN_FUND = 10 ether;
 
@@ -67,12 +68,12 @@ contract AirlineData{
         _;
     }
 
-    function isEnoughToPay(uint256 _funds) public view returns(bool){
-        return msg.sender.balance > _funds;
+    function isEnoughToPay(uint256 _funds, address _funder) public view returns(bool){
+        return _funder.balance > _funds;
     }
 
-    modifier requireEnoughToPay(uint256 _funds){
-        require(isEnoughToPay(_funds), "Balance is not enought to fund");
+    modifier requireEnoughToPay(uint256 _funds, address _funder){
+        require(isEnoughToPay(_funds, _funder), "Balance is not enought to fund");
         _;
     }
 
@@ -81,7 +82,7 @@ contract AirlineData{
         _;
     }
 
-    function addAirline(string memory _name, string memory _code) public requireAirlineNotExist(msg.sender){
+    function addAirline(string memory _name, string memory _code, address _airline) public requireAirlineNotExist(_airline){
         Airline memory airline;
         airline.name = _name;
         airline.code = _code;
@@ -89,10 +90,10 @@ contract AirlineData{
         airline.votesCount = 0;
         airline.fund = 0;
         airline.isExist = true;
-        airlines[msg.sender] = airline;
-        airlinesList.push(msg.sender);
-        emit AirlineEntered(_name, _code, msg.sender);
-        if (isAirlineFulfill(msg.sender)) addToRegisteredAirlines(msg.sender);
+        airlines[_airline] = airline;
+        airlinesList.push(_airline);
+        emit AirlineEntered(_name, _code, _airline);
+        if (isAirlineFulfill(_airline)) addToRegisteredAirlines(_airline);
     }
 
     function _setAirlineRegistered(address _candidate) private requireAirlineEntered(_candidate) {
@@ -110,7 +111,7 @@ contract AirlineData{
         emit AirlineFunded(_name, _code, _candidate, _fund);
     }
 
-    function vote(address _candidate) public requireAirlineRegistered(msg.sender){
+    function vote(address _candidate, address voter) public requireAirlineRegistered(voter){
         require(isAirlineExist(_candidate), "Airline does not exist");
         require(isAirlineEntered(_candidate), "Airline must be in entered status");
         airlines[_candidate].votesCount += 1;
@@ -148,9 +149,9 @@ contract AirlineData{
         _setAirlineRegistered(_candidate);
     }
 
-    function fund(uint256 _funds) public payable requireEnoughToPay(_funds) requireAirlineExist(msg.sender) requireAirlineRegistered(msg.sender){
-        airlines[msg.sender].fund = _funds;
-        _setAirlineFunded(msg.sender);
+    function fund(uint256 _funds, address _funder) public payable requireEnoughToPay(_funds, _funder) requireAirlineExist(_funder) requireAirlineRegistered(_funder){
+        airlines[_funder].fund = _funds;
+        _setAirlineFunded(_funder);
     }
     
     function isEven(uint256 value) private pure returns(bool){
