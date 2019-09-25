@@ -1,6 +1,9 @@
 pragma solidity ^0.5.8;
 
+import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+
 contract OracleManagement{
+    using SafeMath for uint256;
     //Incremented to add pseudo-randomness at various points
     uint8 private nonce = 0;
     

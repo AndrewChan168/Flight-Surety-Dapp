@@ -1,73 +1,61 @@
 pragma solidity ^0.5.8;
 
+import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+
 import "./AirlineData.sol";
 import "./InsuranceData.sol";
 import "./FlightData.sol";
 import "./Authorizable.sol";
 
 contract FlightSuretyData is AirlineData, InsuranceData, FlightData, Authorizable{
-    //address contractOwner;
-    //constructor() public {
-    //    contractOwner = msg.sender;
-    //}
+    using SafeMath for uint256;
 
-    function registerAirline(string memory _name, string memory _code, address _airline) public requireIsOperational requireAuthorizedCaller(msg.sender){
-        addAirline(_name, _code, _airline);
-    }
-
-    function fund(uint256 _funds, address _funder) public payable requireAuthorizedCaller(msg.sender){
-        super.fund(_funds, _funder);
+    function registerAirline(string memory _name, address _airline) public requireIsOperational requireAuthorizedCaller(msg.sender){
+        addAirline(_name, _airline);
     }
 
     function vote(address _candidate, address _voter) public requireAuthorizedCaller(msg.sender){
         super.vote(_candidate, _voter);
     }
 
-    function registerFlight(string memory _code, uint256 _timestamp, address _airline) public requireIsOperational requireAirlineFunded(_airline) requireAuthorizedCaller(msg.sender) returns(bytes32){
+    function registerFlight(string memory _code, uint256 _timestamp, address _airline) public requireIsOperational requireAirlineFunded(_airline) requireAirlinesHasEnoughFund(_airline) requireAuthorizedCaller(msg.sender) returns(bytes32){
         bytes32 flightKey = addFlight(_code, _timestamp, _airline);
         return flightKey;
     }
 
-    function setFlightOnTime(bytes32 _flightID) public requireAuthorizedCaller(msg.sender){
-        super.setFlightOnTime(_flightID);
+    function registerInsurance(address _buyer, bytes32 _flightKey, uint256 _contractTimestamp, address _airline, uint256 _fee) public returns(bytes32){
+        bytes32 insuranceKey = addInsurance(_buyer, _flightKey, _contractTimestamp, _airline, _fee);
+        return insuranceKey;
     }
 
-    function setFlightLateAirline(bytes32 _flightID) public requireAuthorizedCaller(msg.sender){
-        super.setFlightLateAirline(_flightID);
+    function setFlightOnTime(bytes32 flightKey) public requireAuthorizedCaller(msg.sender){
+        super.setFlightOnTime(flightKey);
     }
 
-     function setFlightLateNotAirline(bytes32 _flightID) public requireAuthorizedCaller(msg.sender){
-        super.setFlightLateNotAirline(_flightID);
+    function setFlightLateAirline(bytes32 flightKey) public requireAuthorizedCaller(msg.sender){
+        super.setFlightLateAirline(flightKey);
     }
 
-    function buy(string memory _flightCode, address _airline, uint256 _departTimestamp, uint256 _insureTimestamp, address _buyer, uint256 _fee) public payable requireIsOperational requireAuthorizedCaller(msg.sender)
-        returns(bytes32){
-            require(isAirlineFunded(_airline),"Airline must be in funded status");
-            bytes32 flightKey = generateFlightKey(_flightCode, _departTimestamp);
-            require(isFlightExist(flightKey), "Flight does not exist");
-            bytes32 insuranceKey = buyInsurance(flightKey, _airline, _insureTimestamp, _buyer, _fee);
-            addInsuranceKey(flightKey, insuranceKey);
-            return insuranceKey;
-        }
+     function setFlightLateNotAirline(bytes32 flightKey) public requireAuthorizedCaller(msg.sender){
+        super.setFlightLateNotAirline(flightKey);
+    }
+
+    function setInsuranceExpired(bytes32 insuranceKey) public requireAuthorizedCaller(msg.sender){
+        super.setInsuranceExpired(insuranceKey);
+    }
+
+    function setInsuranceCredited(bytes32 insuranceKey) public requireAuthorizedCaller(msg.sender){
+        super.setInsuranceCredited(insuranceKey);
+    }
+
+    function setInsuranceWithdrawn(bytes32 insuranceKey) public requireAuthorizedCaller(msg.sender){
+        super.setInsuranceWithdrawn(insuranceKey);
+    }
 
     function creditInsurees(bytes32 flightKey) public requireIsOperational requireFlightLateAirline(flightKey) requireAuthorizedCaller(msg.sender){
         bytes32[] memory insuranceKeysList = getInsuranceKeysList(flightKey);
         for(uint256 i=0; i<insuranceKeysList.length; i++){
             creditInsurance(insuranceKeysList[i]);
-        }
-    }
-    
-    function payInsurees(bytes32 flightKey, address _airline) public payable requireIsOperational requireFlightOwner(_airline, flightKey) requireAuthorizedCaller(msg.sender){
-        bytes32[] memory insuranceKeysList = getInsuranceKeysList(flightKey);
-        for(uint256 i=0;i<insuranceKeysList.length;i++){
-            payInsurance(insuranceKeysList[i], _airline);
-        }
-    }
-
-    function proceedFlightNoCreditCase(bytes32 flightKey) public requireIsOperational requireAuthorizedCaller(msg.sender){
-        bytes32[] memory insuranceKeysList = getInsuranceKeysList(flightKey);
-        for(uint256 i=0;i<insuranceKeysList.length;i++){
-            setInsuranceExpired(insuranceKeysList[i]);
         }
     }
 }
