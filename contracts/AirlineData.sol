@@ -70,7 +70,7 @@ contract AirlineData{
     }
 
     modifier requireCouldFund(address _testingAddress){
-        require(couldFund(_testingAddress), "Either in registered or funded status to fund");
+        require(couldFund(_testingAddress), "Airline must either be in registered or funded status to fund");
         _;
     }
 
@@ -118,8 +118,10 @@ contract AirlineData{
     }
 
     function addFund(address _airline, uint256 _fund) public requireCouldFund(_airline) requireAirlineExist(_airline){
+        if (!isAirlineFunded(_airline)){
+            _setAirlineFunded(_airline);
+        }
         airlines[_airline].fund += _fund;
-        //registeredAirlines[_airline].fund += _fund;
     }
 
     function deductFund(address _airline, uint256 _fund) public requireCouldFund(_airline) requireAirlineExist(_airline){
@@ -171,7 +173,7 @@ contract AirlineData{
         emit AirlineFunded(_name, _candidate, _fund);
     }
 
-    function addToRegisteredAirlines(address _candidate) internal {
+    function addToRegisteredAirlines(address _candidate) public {
         require(isAirlineEntered(_candidate), "Candidate must be in entered status");
         //registeredAirlines[_candidate] = airlines[_candidate];
         registeredAirlinesList.push(_candidate);
@@ -185,13 +187,7 @@ contract AirlineData{
         return airlines[_airline].fund;
     }
 
-    function getNumberOfRegisteredAirlines() public view returns (uint256) {
-        return registeredAirlinesList.length;
-    }
-
-
-    function queryAirline(address _airline) public view 
-        returns(string memory name, string memory code, AirlineStatus status, uint256 votesCount, uint256 funds){
+    function queryAirline(address _airline) public view returns(string memory name, AirlineStatus status, uint256 votesCount, uint256 funds){
             name = airlines[_airline].name;
             status = airlines[_airline].status;
             votesCount = airlines[_airline].voters.length;

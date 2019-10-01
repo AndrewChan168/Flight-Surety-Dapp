@@ -79,8 +79,8 @@ contract FlightData{
     functions for adding flight and appening insurance keys to flight
      */
     
-    function addFlight(string memory _code, uint256 _timestamp, address _airline) internal returns (bytes32 flightKey){
-        flightKey = generateFlightKey(_code, _timestamp);
+    function addFlight(string memory _code, uint256 _timestamp, address _airline) internal{
+        bytes32 flightKey = generateFlightKey(_code, _timestamp);
         require(!isFlightExist(flightKey), "Flight has been registered before");
         bytes32[] memory emptyList;
         Flight memory flight;

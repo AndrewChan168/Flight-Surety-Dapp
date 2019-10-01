@@ -83,13 +83,14 @@ contract InsuranceData{
 
     modifier requireBuyerExist(address _buyer) {
         require(isBuyerExist(_buyer), "Buyer doesn't exist");
+        _;
     }
 
     /**
     function for adding and crediting insurance
      */
-    function addInsurance(address _buyer, bytes32 _flightKey, uint256 _contractTimestamp, address _airline, uint256 _fee) public returns(bytes32 insuranceKey){
-        insuranceKey = generateInsuranceKey(_buyer, _flightKey, _contractTimestamp);
+    function addInsurance(address _buyer, bytes32 _flightKey, uint256 _contractTimestamp, address _airline, uint256 _fee) public{
+        bytes32 insuranceKey = generateInsuranceKey(_buyer, _flightKey, _contractTimestamp);
         Insurance memory insurance;
         insurance.buyer = address(uint160(_buyer));
         insurance.flightKey = _flightKey;
@@ -114,28 +115,12 @@ contract InsuranceData{
         credits = fee.add(half);
         insurances[_insuranceKey].credits = credits;
         buyers[buyer].credits += credits;
-        buyers[buyer].credits += credits;
         setInsuranceCredited(_insuranceKey);
     }
 
-    function deductCredits(address _buyer) public view requireBuyerExist(_buyer){
+    function deductCredits(address _buyer) public requireBuyerExist(_buyer){
         buyers[_buyer].credits = 0;
     }
-
-    /*function deductInsurance(bytes32 _insuranceKey, address _airline) public requireAirline(_insuranceKey, _airline) requireCredited(_insuranceKey) returns(uint256 credits){
-        credits = insurances[_insuranceKey].credits;
-        insurances[_insuranceKey].credits = 0;
-        setInsuranceWithdrawn(_insuranceKey);
-    }*/
-
-    /*function payInsurance(bytes32 _insuranceKey, address _airline) public payable requireAirline(_insuranceKey, _airline){
-        uint256 payment = insurances[_insuranceKey].credits;
-        require(_airline.balance>=payment, "Balance is not enough to pay");
-        insurances[_insuranceKey].credits = 0;
-        address payable insuree = insurances[_insuranceKey].buyer;
-        setInsuranceWithdrawn(_insuranceKey);
-        insuree.transfer(payment);
-    }*/
 
     /** 
     functions for setting insurance state

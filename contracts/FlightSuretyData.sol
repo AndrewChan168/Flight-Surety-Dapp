@@ -18,14 +18,16 @@ contract FlightSuretyData is AirlineData, InsuranceData, FlightData, Authorizabl
         super.vote(_candidate, _voter);
     }
 
-    function registerFlight(string memory _code, uint256 _timestamp, address _airline) public requireIsOperational requireAirlineFunded(_airline) requireAirlinesHasEnoughFund(_airline) requireAuthorizedCaller(msg.sender) returns(bytes32){
-        bytes32 flightKey = addFlight(_code, _timestamp, _airline);
-        return flightKey;
+    function registerFlight(string memory _code, uint256 _timestamp, address _airline) public 
+    requireIsOperational requireAirlineFunded(_airline) requireAirlinesHasEnoughFund(_airline) requireAuthorizedCaller(msg.sender){
+        addFlight(_code, _timestamp, _airline);
     }
 
-    function registerInsurance(address _buyer, bytes32 _flightKey, uint256 _contractTimestamp, address _airline, uint256 _fee) public returns(bytes32){
-        bytes32 insuranceKey = addInsurance(_buyer, _flightKey, _contractTimestamp, _airline, _fee);
-        return insuranceKey;
+    function registerInsurance(address _buyer, bytes32 _flightKey, uint256 _contractTimestamp, address _airline, uint256 _fee) public
+    requireIsOperational requireFlightRegistered(_flightKey){
+        addInsurance(_buyer, _flightKey, _contractTimestamp, _airline, _fee);
+        bytes32 _insuranceKey = generateInsuranceKey(_buyer, _flightKey, _contractTimestamp);
+        addInsuranceKey(_flightKey, _insuranceKey);
     }
 
     function setFlightOnTime(bytes32 flightKey) public requireAuthorizedCaller(msg.sender){
