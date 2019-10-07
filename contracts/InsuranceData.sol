@@ -26,7 +26,7 @@ contract InsuranceData{
     mapping(address=>Buyer) buyers;
 
     event BuyInsurance(bytes32 flightKey, bytes32 insuranceKey, address buyer, uint256 fee);
-    event PayInsurance(bytes32 flightKey, bytes32 insuranceKey, address buyer, uint256 credits);
+    event CreditInsurance(bytes32 flightKey, bytes32 insuranceKey, address buyer, uint256 credits);
     
     // the key for extracting insurance
     function generateInsuranceKey(address _buyer, bytes32 _flightKey, uint256 _contractTimestamp) public pure returns(bytes32){
@@ -106,6 +106,7 @@ contract InsuranceData{
         if(!isBuyerExist(_buyer)){
             buyers[_buyer] = Buyer({credits:0, isExist:true});
         }
+        emit BuyInsurance(_flightKey, insuranceKey, _buyer, _fee);
     }
 
     function creditInsurance(bytes32 _insuranceKey) public requireActivated(_insuranceKey) returns(uint256 credits){
@@ -116,6 +117,7 @@ contract InsuranceData{
         insurances[_insuranceKey].credits = credits;
         buyers[buyer].credits += credits;
         setInsuranceCredited(_insuranceKey);
+        //emit CreditInsurance(insurances[_insuranceKey].flightKey,_insuranceKey,buyer,credits);
     }
 
     function deductCredits(address _buyer) public requireBuyerExist(_buyer){

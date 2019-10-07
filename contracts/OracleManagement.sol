@@ -20,6 +20,7 @@ contract OracleManagement{
     
     // Track all registered oracles
     mapping(address => Oracle) internal oracles;
+    address[] internal allOracles;
     
     // Model for responses from oracles
     struct ResponseInfo{
@@ -35,7 +36,6 @@ contract OracleManagement{
     // Track all oracle responses
     // Key = hash(index, flight, timestamp)
     mapping(bytes32 => ResponseInfo) internal oracleResponses;
-
     bytes32[] internal allResponseKeys;
 
     function isResponseExist(bytes32 responseKey) public view returns(bool){
@@ -85,8 +85,8 @@ contract OracleManagement{
         return allResponseKeys;
     }
 
+    event OracleRegister(address oracle, uint8[3] indexes);
     event OracleReport(address airline, string flight, uint256 timestamp, uint8 status);
-    
     // Event fired when flight status request is submitted
     // Oracles track this and if they have a matching index
     // they fetch data and submit a response
@@ -137,10 +137,16 @@ contract OracleManagement{
         uint8[3] memory indexes = generateIndexes(msg.sender);
         
         oracles[msg.sender] = Oracle({isRegistered: true, indexes: indexes});
+        allOracles.push(msg.sender);
+        emit OracleRegister(msg.sender, indexes);
     }
 
     function queryOracle(address oracleAddress) public view returns(bool isRegistered, uint8[3] memory indexes){
         isRegistered = oracles[oracleAddress].isRegistered;
         indexes = oracles[oracleAddress].indexes;
+    }
+
+    function getAllOracles() public view returns(address[] memory){
+        return allOracles;
     }
 }

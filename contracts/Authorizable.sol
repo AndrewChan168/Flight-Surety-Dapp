@@ -3,7 +3,7 @@ pragma solidity ^0.5.8;
 import "./Operational.sol";
 
 contract Authorizable is Operational{
-    bool private authorizable = false;
+    //bool private authorizable = false;
 
     mapping(address=>bool) authorizedCallers;
 
@@ -12,7 +12,8 @@ contract Authorizable is Operational{
     }
 
     modifier requireAuthorizedCaller(address _candidate){
-        require((!authorizable)||(authorizedCallers[_candidate]), "Only authorized callers could call this function");
+        //require((!authorizable)||(authorizedCallers[_candidate]), "Only authorized callers could call this function");
+        require(authorizedCallers[_candidate], "Only authorized callers could call this function");
         _;
     }
 
@@ -20,6 +21,7 @@ contract Authorizable is Operational{
         authorizedCallers[_candidate] = true;
     }
 
+    /*
     function setAuthorizable(bool _setting) public requireIsOperational requireContractOwner{
         authorizable = _setting;
     }
@@ -27,4 +29,5 @@ contract Authorizable is Operational{
     function isAuthorizable() public view returns(bool){
         return authorizable;
     }
+    */
 }

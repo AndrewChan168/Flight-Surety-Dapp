@@ -8,6 +8,7 @@ contract FlightSuretyApp is OracleManagement, Operational{
     using SafeMath for uint256;
     FlightSuretyDataInterface flightSuretyData;
     address private contractOwner;
+    //address private suretyDataAddress;
     
     uint8 private constant STATUS_CODE_UNKNOWN = 0;
     uint8 private constant STATUS_CODE_ON_TIME = 10;
@@ -19,9 +20,16 @@ contract FlightSuretyApp is OracleManagement, Operational{
     event FlightStatusInfo(address airline, string flight, uint256 timestamp, uint8 status);
 
     constructor(address dataContractAddress) public{
+        //suretyDataAddress = dataContractAddress;
         flightSuretyData = FlightSuretyDataInterface(dataContractAddress);
         contractOwner = msg.sender;
     }
+
+/*
+    function getDataAddress() public view returns(address){
+        return suretyDataAddress;
+    }
+*/
     
 
     function registerAirline(string memory _name) public{

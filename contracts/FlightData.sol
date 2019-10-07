@@ -17,10 +17,11 @@ contract FlightData{
     }
     enum FlightStatus{Registered, OnTime, LateAirline, LateNotAirline}
     mapping(bytes32=>Flight) flights;//code+departureTimestamp is the key
+    bytes32[] allFlightKeys;
 
-    event FlightAdded(string flightCode, uint256 deparTimestamp, address airline);
+    event FlightAdded(string flightCode, uint256 deparTimestamp, address airline, bytes32 flightKey);
     //event InsuranceAdded(string flightCode, uint256 deparTimestamp, address airline, bytes32 insuranceKey);
-    event FlightArrival(string flightCode, uint256 deparTimestamp, address airline, FlightStatus state);
+    event FlightArrival(string flightCode, uint256 deparTimestamp, address airline, bytes32 flightKey, FlightStatus state);
     
     // the key for extracting flight data
     function generateFlightKey(string memory _code, uint256 _timestamp) public pure returns (bytes32){
@@ -91,6 +92,8 @@ contract FlightData{
         flight.isExist = true;
         flight.insuranceKeysList = emptyList;
         flights[flightKey] = flight;
+        allFlightKeys.push(flightKey);
+        emit FlightAdded(_code, _timestamp, _airline, flightKey);
     }
     
     function addInsuranceKey(bytes32 _flightKey,bytes32 _insuranceKey) public {
@@ -106,14 +109,26 @@ contract FlightData{
      */
     function setFlightOnTime(bytes32 _flightID) public requireFlightRegistered(_flightID) requireFlightExist(_flightID){
        flights[_flightID].status = FlightStatus.OnTime;
+       emit FlightArrival(flights[_flightID].code,
+        flights[_flightID].timestamp,
+        flights[_flightID].airline,
+        _flightID,flights[_flightID].status);
    }
 
    function setFlightLateAirline(bytes32 _flightID) public requireFlightRegistered(_flightID){
        flights[_flightID].status = FlightStatus.LateAirline;
+       emit FlightArrival(flights[_flightID].code,
+        flights[_flightID].timestamp,
+        flights[_flightID].airline,
+        _flightID,flights[_flightID].status);
    }
 
    function setFlightLateNotAirline(bytes32 _flightID) public requireFlightRegistered(_flightID){
        flights[_flightID].status = FlightStatus.LateNotAirline;
+       emit FlightArrival(flights[_flightID].code,
+        flights[_flightID].timestamp,
+        flights[_flightID].airline,
+        _flightID,flights[_flightID].status);
    }
 
    /**
@@ -131,6 +146,10 @@ contract FlightData{
    function getInsuranceKeysList(bytes32 _flightID) public view requireFlightExist(_flightID) returns(bytes32[] memory){
        return flights[_flightID].insuranceKeysList;
    }
+
+    function getAllFlightKeys() public view returns(bytes32[] memory){
+        return allFlightKeys;
+    }
 
    function getNumberOfInsurance(bytes32 _flightID) public view requireFlightExist(_flightID) returns(uint256){
        return flights[_flightID].insuranceKeysList.length;
