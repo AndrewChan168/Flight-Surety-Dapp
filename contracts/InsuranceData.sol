@@ -4,6 +4,7 @@ import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract InsuranceData{
     using SafeMath for uint256;
+    uint256 constant MAX_FEE = 1 ether;
     
     struct Insurance{
         address payable buyer;
@@ -67,7 +68,7 @@ contract InsuranceData{
         require(isBuyer(_insuranceKey, buyer), "Only buyer of insurance could withdraw credit");
         _;
     }
-
+/*
     function isAirline(bytes32 _insuranceKey, address _candidate) public view returns(bool){
         return insurances[_insuranceKey].airline == _candidate;
     }
@@ -76,7 +77,7 @@ contract InsuranceData{
         require(isAirline(_insuranceKey, _airline), "Only airline of insurance could pay insurance");
         _;
     }
-
+*/
     function isBuyerExist(address _buyer) public view returns(bool){
         return buyers[_buyer].isExist;
     }
@@ -86,10 +87,20 @@ contract InsuranceData{
         _;
     }
 
+    function isLessThanMax(uint256 fee) public pure returns(bool){
+        return fee<=MAX_FEE;
+    }
+
+    modifier requireLessThanMax(uint256 fee){
+        require(isLessThanMax(fee), "Insurance Fee must be less than 1 ether");
+        _;
+    }
+
     /**
     function for adding and crediting insurance
      */
-    function addInsurance(address _buyer, bytes32 _flightKey, uint256 _contractTimestamp, address _airline, uint256 _fee) public{
+    function addInsurance(address _buyer, bytes32 _flightKey, uint256 _contractTimestamp, address _airline, uint256 _fee) requireLessThanMax(_fee) 
+    public{
         bytes32 insuranceKey = generateInsuranceKey(_buyer, _flightKey, _contractTimestamp);
         Insurance memory insurance;
         insurance.buyer = address(uint160(_buyer));

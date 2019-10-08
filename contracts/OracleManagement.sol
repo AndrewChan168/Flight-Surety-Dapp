@@ -90,7 +90,7 @@ contract OracleManagement{
     // Event fired when flight status request is submitted
     // Oracles track this and if they have a matching index
     // they fetch data and submit a response
-    event OracleRequest(uint8 index, address airline, string flight, uint256 timestamp);
+    event OracleRequest(uint8 index, address airline, string flight, uint256 flightTimestamp, uint256 fetchTimestamp);
     
     function getMyIndexes() public view returns(uint8[3] memory) {
         require(oracles[msg.sender].isRegistered, "Not registered as an oracle");

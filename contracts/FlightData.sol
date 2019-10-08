@@ -136,11 +136,13 @@ contract FlightData{
     */
     
    
-   function queryFlightInfo(bytes32 _flightID) public view returns( string memory code, address airline, uint256 timestamp, FlightStatus status){
+   function queryFlightInfo(bytes32 _flightID) public view 
+   returns(bytes32 flightKey, string memory code, address airline, uint256 timestamp, FlightStatus status){
        code = flights[_flightID].code;
        airline = flights[_flightID].airline;
        timestamp = flights[_flightID].timestamp;
        status = flights[_flightID].status;
+       flightKey = _flightID;
    }
    
    function getInsuranceKeysList(bytes32 _flightID) public view requireFlightExist(_flightID) returns(bytes32[] memory){
