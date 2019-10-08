@@ -134,7 +134,7 @@ let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, Config.appAddre
                                 .estimateGas({from:accounts[11]});
         console.log(`Estimated gas for registering oracle: ${estimateGas}`);
         
-        for (let i=11; i<=30; i++){
+        for (let i=11; i<=40; i++){
             estimateGas = await flightSuretyApp.methods
                                     .registerOracle()
                                     .estimateGas({from:accounts[i]});
