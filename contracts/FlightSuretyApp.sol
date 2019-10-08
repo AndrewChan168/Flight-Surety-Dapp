@@ -93,17 +93,18 @@ contract FlightSuretyApp is OracleManagement, Operational{
     /**
     * Handling oracles
     */
-    function generateResponseKey(uint8 randomIndex, address airline, string memory flight,uint256 timestamp) public pure returns(bytes32){
-        return  keccak256(abi.encodePacked(randomIndex, airline, flight, timestamp));
+    function generateResponseKey(uint8 randomIndex, address airline, string memory flight,uint256 flightTimestamp, uint256 fetchTimestamp) public pure returns(bytes32){
+        return  keccak256(abi.encodePacked(randomIndex, airline, flight, flightTimestamp, fetchTimestamp));
     }
 
-    function fetchFlightStatus(address airline, string memory flightCode, uint256 flightTimestamp) public requireIsOperational{
+    function fetchFlightStatus(address airline, string memory flightCode, uint256 flightTimestamp, uint256 fetchTimestamp) 
+    public requireIsOperational{
         uint8 fetchIndex = getRandomIndex(msg.sender);
-        bytes32 reponseKey = generateResponseKey(fetchIndex, airline, flightCode, flightTimestamp);
+        bytes32 reponseKey = generateResponseKey(fetchIndex, airline, flightCode, flightTimestamp, fetchTimestamp);
         allResponseKeys.push(reponseKey);
         createResponseInfo(reponseKey, msg.sender);
 
-        emit OracleRequest(fetchIndex, airline, flightCode, flightTimestamp);
+        emit OracleRequest(fetchIndex, airline, flightCode, flightTimestamp, fetchTimestamp);
     }
 
     function checkAllIndexes(uint8 index, address requester) public view returns(bool){
@@ -120,24 +121,24 @@ contract FlightSuretyApp is OracleManagement, Operational{
     // For the response to be accepted, there must be a pending request that is open
     // and matches one of the three Indexes randomly assigned to the oracle at the
     // time of registration (i.e. uninvited oracles are not welcome)
-    function submitOracleResponse(uint8 fetchIndex, address airline, string memory  flight, uint256 timestamp, uint8 statusCode) public requireIsOperational requireCorrectIndexes(fetchIndex, msg.sender){
+    function submitOracleResponse(uint8 fetchIndex, address airline, string memory  flight, uint256 flightTimestamp, uint256 fetchTimestamp, uint8 statusCode) public requireIsOperational requireCorrectIndexes(fetchIndex, msg.sender){
         //require(((oracles[msg.sender].indexes[0] == index) || (oracles[msg.sender].indexes[1] == index) || (oracles[msg.sender].indexes[2] == index)), "Index does not match oracle request");
 
         //bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp)); 
-        bytes32 key = generateResponseKey(fetchIndex, airline, flight, timestamp);
+        bytes32 key = generateResponseKey(fetchIndex, airline, flight, flightTimestamp, fetchTimestamp);
         require(oracleResponses[key].isExist, "Generated response key does not match oracle request");
 
         oracleResponses[key].responses[statusCode].push(msg.sender);
 
         // Information isn't considered verified until at least MIN_RESPONSES
         // oracles respond with the *** same *** information
-        emit OracleReport(airline, flight, timestamp, statusCode);
+        emit OracleReport(airline, flight, flightTimestamp, statusCode);
         if ((oracleResponses[key].responses[statusCode].length >= MIN_RESPONSES)&&(isResponseOpen(key))) {
             setResponseClose(key, statusCode);
-            emit FlightStatusInfo(airline, flight, timestamp, statusCode);
+            emit FlightStatusInfo(airline, flight, flightTimestamp, statusCode);
 
             // Handle flight status as appropriate
-            processFlightStatus(flight, timestamp, statusCode);
+            processFlightStatus(flight, flightTimestamp, statusCode);
         }
     }
 
