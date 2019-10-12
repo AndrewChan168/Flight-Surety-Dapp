@@ -15,7 +15,7 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
     const passenagerC = accounts[9];
     const fundFee = 11;
     const fundFeeWei = web3.utils.toWei(fundFee.toString());
-    const insuranceFee = 2;
+    const insuranceFee = 1;
     const insuranceFeeWei = web3.utils.toWei(insuranceFee.toString());
     const registerFee = 2;
     const registerFeeWei = web3.utils.toWei(registerFee.toString());
@@ -29,11 +29,13 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
     console.log(`Flight Timestamp:${flightTimestamp}`);
     contractTimeStamp = Math.floor((Date.now()+1000) / 1000);
     console.log(`Constract Timestamp:${contractTimeStamp}`);
+    const fetchTimestamp = Math.floor(Date.now() / 1000);
+    console.log(`Fetch Timestamp:${fetchTimestamp}`);
 
     before('setup contract', async () => {
         config = await Test.Config(accounts);
         await config.flightSuretyData.addAuthorizedCaller(config.flightSuretyApp.address, {from:owner});
-        await config.flightSuretyData.setAuthorizable(true, {from:owner});
+        //await config.flightSuretyData.setAuthorizable(true, {from:owner});
     });
 
 
@@ -62,12 +64,6 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
             } catch(err){
                 assert.fail("Cannot add authorized caller");
             }
-
-            const isAuthorized = await config.flightSuretyData.isAuthorizedCaller.call(config.flightSuretyApp.address);
-            assert.equal(isAuthorized, true, "Fail to add authorized caller");
-
-            const anotherIsAuthorized = await config.flightSuretyData.isAuthorizedCaller.call(passenagerB);
-            assert.equal(anotherIsAuthorized, false, "Not authorized caller showed as authorized caller");
         });
 
 
@@ -292,8 +288,8 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
             const insuranceInfoPassAlate01 = await config.flightSuretyData.queryInsuranceInfo.call(insuranceKeyPassAlate01);
             const insuranceInfoPassBlate01 = await config.flightSuretyData.queryInsuranceInfo.call(insuranceKeyPassBlate01);
 
-            assert.equal(insuranceInfoPassAlate01.credits.toString(), web3.utils.toWei('3'), "Credits of insurance from passenager A on flight LATE01 is incorrect");
-            assert.equal(insuranceInfoPassBlate01.credits.toString(), web3.utils.toWei('3'), "Credits of insurance from passenager A on flight LATE01 is incorrect");
+            assert.equal(insuranceInfoPassAlate01.credits.toString(), web3.utils.toWei('1.5'), "Credits of insurance from passenager A on flight LATE01 is incorrect");
+            assert.equal(insuranceInfoPassBlate01.credits.toString(), web3.utils.toWei('1.5'), "Credits of insurance from passenager A on flight LATE01 is incorrect");
         });
 
         it(`could block passenager buy insurance after flight was declated as late`, async()=>{
@@ -347,7 +343,7 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
             for (let i=11; i<30; i++){
                 try{
                     await config.flightSuretyApp.registerOracle({from:accounts[i], value:registerFeeWei});
-                    oracleIndexes = await await config.flightSuretyApp.getMyIndexes({from:accounts[i]});
+                    oracleIndexes = await config.flightSuretyApp.getMyIndexes({from:accounts[i]});
                     console.log(`Oracle-${i} ${accounts[i]}: ${oracleIndexes[0].toString()}, ${oracleIndexes[1].toString()}, ${oracleIndexes[2].toString()}`);
                 } catch(err){
                     assert.fail(`Error at ${i}-oracle: ${err.message}`);
@@ -357,7 +353,7 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
 
         it(`allows passenager to fetch flight status`, async()=>{
             try{
-                await config.flightSuretyApp.fetchFlightStatus(firstAirline, "AX00", flightTimestamp, {from:passenagerA});
+                await config.flightSuretyApp.fetchFlightStatus(firstAirline, "AX00", flightTimestamp, fetchTimestamp, {from:passenagerA});
             }catch(err){
                 console.log(err.message);
                 assert.fail("Passenager could not fetch flight status");
@@ -371,7 +367,7 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
             const responses = await config.flightSuretyApp.getAllResponseKeys.call();
             assert.equal(responses.length, 1, "Length of responses array is incorrect");
 
-            let fetchKey = await config.flightSuretyApp.generateResponseKey.call(fetchIndex, firstAirline, "AX00", flightTimestamp);
+            let fetchKey = await config.flightSuretyApp.generateResponseKey.call(fetchIndex, firstAirline, "AX00", flightTimestamp, fetchTimestamp);
             let responseInfo = await config.flightSuretyApp.queryResponseInfo.call(fetchKey);
             assert.equal(responseInfo.statusCode.toNumber(), 0, "Status code of responesInfo is incorrect");
             assert.equal(responseInfo.isOpen, true, "ResponseInfo status is not opened");
@@ -381,18 +377,24 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
         it(`allow oracle submit responses and could proceed flight on time correctly`, async()=>{
             let oracleRequestEvents = await config.flightSuretyApp.getPastEvents('OracleRequest',{fromBlock: 0, toBlock: 'latest'});
             let fetchIndex = parseInt(oracleRequestEvents.slice(-1)[0].returnValues.index);
+            let fetchTimestamp = parseInt(oracleRequestEvents.slice(-1)[0].returnValues.fetchTimestamp);
             console.log(`Fetching index: ${fetchIndex}`);
+            console.log(`Fetching Timestamp: ${fetchTimestamp}`);
             //console.log("events list:");
             //console.log(oracleRequestEvents.slice(-1)[0].returnValues);
             
             var oracleIndexes;
             var responseCount = 0;
-            for(let i=11; i<30; i++){
+            for(let i=11; i<35; i++){
                 oracleIndexes = await config.flightSuretyApp.getMyIndexes({from:accounts[i]});
                 for (let idx=0; idx<3; idx++){
                     try{
                         await config.flightSuretyApp
-                            .submitOracleResponse(oracleIndexes[idx], firstAirline, "AX00", flightTimestamp, STATUS_CODE_ON_TIME, {from: accounts[i]});
+                            .submitOracleResponse(
+                                oracleIndexes[idx], firstAirline, "AX00", 
+                                flightTimestamp, fetchTimestamp, STATUS_CODE_ON_TIME, 
+                                {from: accounts[i]}
+                            );
                         responseCount+=1;
                     }catch(err){
                         if (oracleIndexes[idx] == fetchIndex) {
@@ -406,7 +408,7 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
             let oracleReportEvents = await config.flightSuretyApp.getPastEvents('OracleReport',{fromBlock: 0, toBlock: 'latest'});
             assert.equal(oracleReportEvents.length, responseCount, "Count of responses is not equal to number of events emitted");
             
-            let fetchKey = await config.flightSuretyApp.generateResponseKey.call(fetchIndex, firstAirline, "AX00", flightTimestamp);
+            let fetchKey = await config.flightSuretyApp.generateResponseKey.call(fetchIndex, firstAirline, "AX00", flightTimestamp, fetchTimestamp);
             let responseInfo = await config.flightSuretyApp.queryResponseInfo.call(fetchKey);
             assert.equal(responseInfo.statusCode.toNumber(), 10, "Status code of responesInfo is incorrect");
 
@@ -416,11 +418,12 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
         });
 
         it(`Oracles could proceed flight late due to airline and proceed credits correctly`, async()=>{
-            await config.flightSuretyApp.fetchFlightStatus(firstAirline, "LATE02", flightTimestamp, {from:passenagerA});
+            await config.flightSuretyApp.fetchFlightStatus(firstAirline, "LATE02", flightTimestamp, fetchTimestamp, {from:passenagerA});
 
             let oracleRequestEvents = await config.flightSuretyApp.getPastEvents('OracleRequest',{fromBlock: 0, toBlock: 'latest'});
             let fetchIndex = parseInt(oracleRequestEvents.slice(-1)[0].returnValues.index);
             console.log(`Fetching index: ${fetchIndex}`);
+            console.log(`Fetching Timestamp: ${fetchTimestamp}`);
             //console.log("events list:");
             //console.log(oracleRequestEvents.slice(-1)[0].returnValues);
             
@@ -434,8 +437,8 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
                     try{
                         await config.flightSuretyApp
                                     .submitOracleResponse(oracleIndexes[idx], firstAirline, "LATE02", 
-                                                            flightTimestamp, STATUS_CODE_LATE_AIRLINE, 
-                                                            {from: accounts[i]});
+                                                            flightTimestamp, fetchTimestamp,
+                                                            STATUS_CODE_LATE_AIRLINE, {from: accounts[i]});
                         responseCount+=1;
                     }catch(err){
                         if (oracleIndexes[idx] == fetchIndex) {
@@ -446,7 +449,7 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
                 }
             }
             
-            let fetchKey = await config.flightSuretyApp.generateResponseKey.call(fetchIndex, firstAirline, "LATE02", flightTimestamp);
+            let fetchKey = await config.flightSuretyApp.generateResponseKey.call(fetchIndex, firstAirline, "LATE02", flightTimestamp, fetchTimestamp);
             let responseInfo = await config.flightSuretyApp.queryResponseInfo.call(fetchKey);
 
             assert.equal(responseInfo.statusCode.toNumber(), 20, "Status code of responesInfo is incorrect");
@@ -455,19 +458,20 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
                 .generateInsuranceKey.call(passenagerA, lateFlightKey02, contractTimeStamp);
 
             const insuranceInfoPassAlate02 = await config.flightSuretyData.queryInsuranceInfo.call(insuranceKeyPassAlate02);
-            assert.equal(insuranceInfoPassAlate02.credits.toString(), web3.utils.toWei('3'), "Credits of insurance from passenager A on flight LATE01 is incorrect");
+            assert.equal(insuranceInfoPassAlate02.credits.toString(), web3.utils.toWei('1.5'), "Credits of insurance from passenager A on flight LATE01 is incorrect");
 
             const passenagerATotalCredits = await config.flightSuretyData.queryBuyerCredit.call(passenagerA);
-            assert.equal(passenagerATotalCredits.toString(), web3.utils.toWei('6'), "Total credits of passenager A is incorrect");
+            assert.equal(passenagerATotalCredits.toString(), web3.utils.toWei('3'), "Total credits of passenager A is incorrect");
         });
 
 
         it(`Oracles could proceed flight late due to other reason and block to credit`, async()=>{
-            await config.flightSuretyApp.fetchFlightStatus(firstAirline, "LATE03", flightTimestamp, {from:passenagerA});
+            await config.flightSuretyApp.fetchFlightStatus(firstAirline, "LATE03", flightTimestamp, fetchTimestamp, {from:passenagerA});
 
             let oracleRequestEvents = await config.flightSuretyApp.getPastEvents('OracleRequest',{fromBlock: 0, toBlock: 'latest'});
             let fetchIndex = parseInt(oracleRequestEvents.slice(-1)[0].returnValues.index);
             console.log(`Fetching index: ${fetchIndex}`);
+            console.log(`Fetching Timestamp: ${fetchTimestamp}`);
 
             const lateFlightKey03 = await config.flightSuretyData.generateFlightKey.call("LATE03", flightTimestamp);
 
@@ -479,8 +483,8 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
                     try{
                         await config.flightSuretyApp
                                     .submitOracleResponse(oracleIndexes[idx], firstAirline, "LATE03", 
-                                                            flightTimestamp, STATUS_CODE_LATE_WEATHER, 
-                                                            {from: accounts[i]});
+                                                            flightTimestamp, fetchTimestamp,
+                                                            STATUS_CODE_LATE_WEATHER, {from: accounts[i]});
                         responseCount+=1;
                     }catch(err){
                         if (oracleIndexes[idx] == fetchIndex) {
@@ -490,7 +494,7 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
                     }
                 }
             }
-            let fetchKey = await config.flightSuretyApp.generateResponseKey.call(fetchIndex, firstAirline, "LATE03", flightTimestamp);
+            let fetchKey = await config.flightSuretyApp.generateResponseKey.call(fetchIndex, firstAirline, "LATE03", flightTimestamp, fetchTimestamp);
             let responseInfo = await config.flightSuretyApp.queryResponseInfo.call(fetchKey);
             assert.equal(responseInfo.statusCode.toNumber(), 30, "Status code of responesInfo is incorrect");
 
