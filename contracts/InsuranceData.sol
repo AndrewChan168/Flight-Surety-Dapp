@@ -120,11 +120,14 @@ contract InsuranceData{
         emit BuyInsurance(_flightKey, insuranceKey, _buyer, _fee);
     }
 
+    function calculateCredits(uint256 fee) public pure returns(uint256 credits){
+        credits = fee.add(fee.div(2));
+    }
+
     function creditInsurance(bytes32 _insuranceKey) public requireActivated(_insuranceKey) returns(uint256 credits){
         uint256 fee = insurances[_insuranceKey].fee;
         address buyer = insurances[_insuranceKey].buyer;
-        uint256 half = fee.div(2);
-        credits = fee.add(half);
+        credits = calculateCredits(fee);
         insurances[_insuranceKey].credits = credits;
         buyers[buyer].credits += credits;
         setInsuranceCredited(_insuranceKey);

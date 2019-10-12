@@ -18,6 +18,7 @@ contract FlightSuretyApp is OracleManagement, Operational{
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
 
     event FlightStatusInfo(address airline, string flight, uint256 timestamp, uint8 status);
+    event WithdrawCredits(address passenager, uint256 credits);
 
     constructor(address dataContractAddress) public{
         //suretyDataAddress = dataContractAddress;
@@ -80,6 +81,7 @@ contract FlightSuretyApp is OracleManagement, Operational{
         require(queryContractBalance()>credits, "Application's ether is not enough");
         flightSuretyData.deductCredits(msg.sender);
         msg.sender.transfer(credits);
+        emit WithdrawCredits(msg.sender, credits);
     }
 
     function proceedFlightNoCreditCase(bytes32 flightKey) public{

@@ -194,9 +194,16 @@ contract AirlineData{
             funds = airlines[_airline].fund;
         }
 
+
     function queryRegisteredAirlinesCount() public view returns(uint256){
         return registeredAirlinesList.length;
     }
+    
+/*
+    function queryRegisteredAirlines() public view returns(address[] memory){
+        return registeredAirlinesList;
+    }
+    */
 
     function queryAirlinesCount() public view returns(uint256){
         return airlinesList.length;
