@@ -27,14 +27,15 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
     const STATUS_CODE_LATE_OTHER = 50;
     flightTimestamp = Math.floor((Date.now()) / 1000);
     console.log(`Flight Timestamp:${flightTimestamp}`);
-    contractTimeStamp = Math.floor((Date.now()+1000) / 1000);
-    console.log(`Constract Timestamp:${contractTimeStamp}`);
+    /*contractTimeStamp = Math.floor((Date.now()+1000) / 1000);
+    console.log(`Constract Timestamp:${contractTimeStamp}`);*/
     const fetchTimestamp = Math.floor(Date.now() / 1000);
     console.log(`Fetch Timestamp:${fetchTimestamp}`);
 
     before('setup contract', async () => {
         config = await Test.Config(accounts);
         await config.flightSuretyData.addAuthorizedCaller(config.flightSuretyApp.address, {from:owner});
+        await config.buyerData.addAuthorizedCaller(config.flightSuretyApp.address, {from:owner});
         //await config.flightSuretyData.setAuthorizable(true, {from:owner});
     });
 
@@ -43,6 +44,9 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
         it(`(multiparty) has correct initial isOperational() value`, async ()=>{
             let dataStatus = await config.flightSuretyData.isOperational.call();
             assert.equal(dataStatus, true, "Incorrect FlightSuretyData initial operating status value");
+
+            let buyerStatus = await config.buyerData.isOperational.call();
+            assert.equal(buyerStatus, true, "Incorrect FlightSuretyApp initial operating status value");
 
             let appStatus = await config.flightSuretyData.isOperational.call();
             assert.equal(appStatus, true, "Incorrect FlightSuretyApp initial operating status value");
@@ -53,6 +57,9 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
             let feedbackDataOwner = await config.flightSuretyData.getOwner.call();
             assert.equal(feedbackDataOwner, config.owner, "FlightSuretyData's contract owner is incorrect")
 
+            let feedbuyerDataOwner = await config.buyerData.getOwner.call();
+            assert.equal(feedbuyerDataOwner, config.owner, "FlightSuretyData's contract owner is incorrect")
+
             let feedbackAppOwner = await config.flightSuretyApp.getOwner.call();
             assert.equal(feedbackAppOwner, config.owner, "FlightSuretyApp's contract owner is incorrect")
         });
@@ -62,7 +69,13 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
             try{
                 await config.flightSuretyData.addAuthorizedCaller(config.flightSuretyApp.address, {from:owner});
             } catch(err){
-                assert.fail("Cannot add authorized caller");
+                assert.fail("Cannot add authorized caller for FlightSuretyData");
+            }
+
+            try{
+                await config.buyerData.addAuthorizedCaller(config.flightSuretyApp.address, {from:owner});
+            } catch(err){
+                assert.fail("Cannot add authorized caller for BuyerData");
             }
         });
 
@@ -83,6 +96,14 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
                 accessAppDenied = true;
             }
             assert.equal(accessAppDenied, true, "Access to FlightSuretyApp is not restricted to Contract Owner");
+
+            let accessBuyerDenied = false;
+            try{
+                await config.buyerData.setOperatingStatus(false, { from: firstAirline});
+            } catch(err){
+                accessBuyerDenied = true;
+            }
+            assert.equal(accessBuyerDenied, true, "Access to FlightSuretyApp is not restricted to Contract Owner");
         });
     });
 
@@ -238,11 +259,9 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
             const flightKeyLate01 = await config.flightSuretyData.generateFlightKey("LATE01", flightTimestamp);
             try{
                 await config.flightSuretyApp
-                    .passenagerBuyInsurance(flightKeyLate01, contractTimeStamp, firstAirline,
-                        {from:passenagerA, value:insuranceFeeWei});
+                    .passenagerBuyInsurance(flightKeyLate01, firstAirline, {from:passenagerA, value:insuranceFeeWei});
                 await config.flightSuretyApp
-                    .passenagerBuyInsurance(flightKeyLate01, contractTimeStamp, firstAirline,
-                        {from:passenagerB, value:insuranceFeeWei});
+                    .passenagerBuyInsurance(flightKeyLate01, firstAirline, {from:passenagerB, value:insuranceFeeWei});
             } catch(err){
                 console.log(err.message);
                 assert.fail("Passenager could not buy insurance for flight LATE01");
@@ -251,10 +270,8 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
             const insurancesNum = await config.flightSuretyData.getNumberOfInsurance.call(flightKeyLate01);
             console.log(`Number of Insurances: ${insurancesNum}`);
 
-            const insuranceKeyPassAlate01 = await config.flightSuretyData
-                .generateInsuranceKey.call(passenagerA, flightKeyLate01, contractTimeStamp);
-            const insuranceKeyPassBlate01 = await config.flightSuretyData
-                .generateInsuranceKey.call(passenagerB, flightKeyLate01, contractTimeStamp);
+            const insuranceKeyPassAlate01 = await config.flightSuretyData.generateInsuranceKey.call(passenagerA, flightKeyLate01);
+            const insuranceKeyPassBlate01 = await config.flightSuretyData.generateInsuranceKey.call(passenagerB, flightKeyLate01);
 
             assert.equal(await config.flightSuretyData.isExist.call(insuranceKeyPassAlate01), true, "Insurance from passenager A on flight LATE01 doesn't exist");
             assert.equal(await config.flightSuretyData.isExist.call(insuranceKeyPassBlate01), true, "Insurance from passenager B on flight LATE01 doesn't exist");
@@ -272,10 +289,8 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
         it(`could credit to passenagers of late flight correctly`, async()=>{
             const flightKeyLate01 = await config.flightSuretyData.generateFlightKey("LATE01", flightTimestamp);
 
-            const insuranceKeyPassAlate01 = await config.flightSuretyData
-                .generateInsuranceKey.call(passenagerA, flightKeyLate01, contractTimeStamp);
-            const insuranceKeyPassBlate01 = await config.flightSuretyData
-                .generateInsuranceKey.call(passenagerB, flightKeyLate01, contractTimeStamp);
+            const insuranceKeyPassAlate01 = await config.flightSuretyData.generateInsuranceKey.call(passenagerA, flightKeyLate01);
+            const insuranceKeyPassBlate01 = await config.flightSuretyData.generateInsuranceKey.call(passenagerB, flightKeyLate01);
 
             await config.flightSuretyApp.setFlightLateAirline(flightKeyLate01);
 
@@ -301,9 +316,8 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
 
             var couldBlock = false;
             try{
-                await config.flightSuretyApp
-                    .passenagerBuyInsurance(flightKeyLate00, contractTimeStamp, firstAirline,
-                        {from:passenagerA, value:insuranceFeeWei});
+                await config.flightSuretyApp.passenagerBuyInsurance(flightKeyLate00, firstAirline,
+                                                                    {from:passenagerA, value:insuranceFeeWei});
             }catch(err){
                 //console.log(err.message);
                 couldBlock = true;
@@ -322,25 +336,23 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
 
             const flightKeyLate02 = await config.flightSuretyData.generateFlightKey("LATE02", flightTimestamp);
             await config.flightSuretyApp
-                .passenagerBuyInsurance(flightKeyLate02, contractTimeStamp, firstAirline, 
+                .passenagerBuyInsurance(flightKeyLate02, firstAirline, 
                     {from:passenagerA, value:insuranceFeeWei});
             await config.flightSuretyApp
-                .passenagerBuyInsurance(flightKeyLate02, contractTimeStamp, firstAirline, 
+                .passenagerBuyInsurance(flightKeyLate02, firstAirline, 
                     {from:passenagerB, value:insuranceFeeWei});
 
 
             const flightKeyLate03 = await config.flightSuretyData.generateFlightKey("LATE03", flightTimestamp);
             await config.flightSuretyApp
-                .passenagerBuyInsurance(flightKeyLate03, contractTimeStamp, firstAirline, 
-                    {from:passenagerA, value:insuranceFeeWei});
+                .passenagerBuyInsurance(flightKeyLate03, firstAirline, {from:passenagerA, value:insuranceFeeWei});
             await config.flightSuretyApp
-                .passenagerBuyInsurance(flightKeyLate03, contractTimeStamp, firstAirline, 
-                    {from:passenagerB, value:insuranceFeeWei});
+                .passenagerBuyInsurance(flightKeyLate03, firstAirline, {from:passenagerB, value:insuranceFeeWei});
         });
 
         it(`allows oracles to register`, async()=>{
             var oracleIndexes;
-            for (let i=11; i<30; i++){
+            for (let i=11; i<35; i++){
                 try{
                     await config.flightSuretyApp.registerOracle({from:accounts[i], value:registerFeeWei});
                     oracleIndexes = await config.flightSuretyApp.getMyIndexes({from:accounts[i]});
@@ -428,6 +440,7 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
             //console.log(oracleRequestEvents.slice(-1)[0].returnValues);
             
             const lateFlightKey02 = await config.flightSuretyData.generateFlightKey.call("LATE02", flightTimestamp);
+            //console.log(`FlightKey: ${lateFlightKey02}`);
 
             var oracleIndexes;
             var responseCount = 0;
@@ -451,16 +464,15 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
             
             let fetchKey = await config.flightSuretyApp.generateResponseKey.call(fetchIndex, firstAirline, "LATE02", flightTimestamp, fetchTimestamp);
             let responseInfo = await config.flightSuretyApp.queryResponseInfo.call(fetchKey);
-
             assert.equal(responseInfo.statusCode.toNumber(), 20, "Status code of responesInfo is incorrect");
 
-            const insuranceKeyPassAlate02 = await config.flightSuretyData
-                .generateInsuranceKey.call(passenagerA, lateFlightKey02, contractTimeStamp);
+            const insuranceKeyPassAlate02 = await config.flightSuretyData.generateInsuranceKey.call(passenagerA, lateFlightKey02);
+            console.log(`Insurance Key: ${insuranceKeyPassAlate02}`);
 
             const insuranceInfoPassAlate02 = await config.flightSuretyData.queryInsuranceInfo.call(insuranceKeyPassAlate02);
             assert.equal(insuranceInfoPassAlate02.credits.toString(), web3.utils.toWei('1.5'), "Credits of insurance from passenager A on flight LATE01 is incorrect");
 
-            const passenagerATotalCredits = await config.flightSuretyData.queryBuyerCredit.call(passenagerA);
+            const passenagerATotalCredits = await config.buyerData.queryBuyerCredit.call(passenagerA);
             assert.equal(passenagerATotalCredits.toString(), web3.utils.toWei('3'), "Total credits of passenager A is incorrect");
         });
 
@@ -498,8 +510,7 @@ contract(`Test FlightSuretyApp`, async(accounts)=>{
             let responseInfo = await config.flightSuretyApp.queryResponseInfo.call(fetchKey);
             assert.equal(responseInfo.statusCode.toNumber(), 30, "Status code of responesInfo is incorrect");
 
-            const insuranceKeyPassAlate03 = await config.flightSuretyData
-                .generateInsuranceKey.call(passenagerA, lateFlightKey03, contractTimeStamp);
+            const insuranceKeyPassAlate03 = await config.flightSuretyData.generateInsuranceKey.call(passenagerA, lateFlightKey03);
 
             const insuranceInfoPassAlate03 = await config.flightSuretyData.queryInsuranceInfo.call(insuranceKeyPassAlate03);
             assert.equal(insuranceInfoPassAlate03.credits.toString(), web3.utils.toWei('0'), "Credits of insurance from passenager A on flight LATE01 is incorrect");
