@@ -1,11 +1,13 @@
 const Config = require("../../src/config.json");
 const FlightSuretyApp = require("../../build/contracts/FlightSuretyApp.json");
 const FlightSuretyData = require("../../build/contracts/FlightSuretyData.json");
+const BuyerData = require("../../build/contracts/BuyerData.json");
 const Web3 = require("web3");
 
 let web3 = new Web3(Config.url);
 /** when contracts have been deployed */
 let flightSuretyData = new web3.eth.Contract(FlightSuretyData.abi, Config.dataAddress);
+let buyerData = new web3.eth.Contract(BuyerData.abi, Config.buyerDataAddress);
 let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, Config.appAddress);
 
 (async ()=>{
@@ -17,11 +19,19 @@ let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, Config.appAddre
         var flightKey;
         var oracleIndexes;
         var accountBalance;
+        var isAuthor;
         
         await flightSuretyData.methods
                 .addAuthorizedCaller(flightSuretyApp.options.address)
                 .send({from:accounts[0]});
-        const isAuthor = await flightSuretyData.methods
+        await buyerData.methods
+                .addAuthorizedCaller(flightSuretyApp.options.address)
+                .send({from:accounts[0]});
+        isAuthor = await flightSuretyData.methods
+                            .isAuthorizedCaller(flightSuretyApp.options.address)
+                            .call({from:accounts[0]})
+        console.log(`Is FlightSuretyApp author of FlightSuretyData: ${isAuthor}`);
+        isAuthor = await buyerData.methods
                             .isAuthorizedCaller(flightSuretyApp.options.address)
                             .call({from:accounts[0]})
         console.log(`Is FlightSuretyApp author of FlightSuretyData: ${isAuthor}`);
