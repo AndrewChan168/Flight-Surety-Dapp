@@ -50,8 +50,10 @@ module.exports = {
     
     develop: {
       port: 8545,
-      accounts: 30,
-      defaultEtherBalance: 50000
+      accounts: 50,
+      defaultEtherBalance: 100,
+      websockets: true,
+      gas: 50000000
     },
 
     // Another network with more advanced options...
@@ -93,13 +95,13 @@ module.exports = {
     solc: {
       // version: "0.5.1",    // Fetch exact version from solc-bin (default: truffle's version)
       // docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
-      // settings: {          // See the solidity docs for advice about optimization and evmVersion
+      //settings: {          // See the solidity docs for advice about optimization and evmVersion
       //  optimizer: {
       //    enabled: false,
-      //    runs: 200
+      //    runs: 800
       //  },
       //  evmVersion: "byzantium"
-      // }
+      //}
     }
   }
 }
