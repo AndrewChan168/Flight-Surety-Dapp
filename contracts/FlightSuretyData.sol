@@ -23,10 +23,10 @@ contract FlightSuretyData is AirlineData, InsuranceData, FlightData, Authorizabl
         addFlight(_code, _timestamp, _airline);
     }
 
-    function registerInsurance(address _buyer, bytes32 _flightKey, uint256 _contractTimestamp, address _airline, uint256 _fee) public
+    function registerInsurance(address _buyer, bytes32 _flightKey, address _airline, uint256 _fee) public
     requireIsOperational requireFlightRegistered(_flightKey){
-        addInsurance(_buyer, _flightKey, _contractTimestamp, _airline, _fee);
-        bytes32 _insuranceKey = generateInsuranceKey(_buyer, _flightKey, _contractTimestamp);
+        addInsurance(_buyer, _flightKey, _airline, _fee);
+        bytes32 _insuranceKey = generateInsuranceKey(_buyer, _flightKey);
         addInsuranceKey(_flightKey, _insuranceKey);
     }
 

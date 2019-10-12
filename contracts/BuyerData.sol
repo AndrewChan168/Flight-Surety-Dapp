@@ -10,6 +10,7 @@ contract BuyerData is Authorizable{
         uint256 credits;
         bool isExist;
         bytes32[] allInsuranceKeys;
+        bytes32[] allFlightKeys;
     }
 
     mapping(address=>Buyer) buyers;
@@ -23,14 +24,30 @@ contract BuyerData is Authorizable{
         _;
     }
 
-    function appendInsurance(address _buyer, bytes32 _insuranceKey) public requireBuyerExist(_buyer){
+    function addBuyer(address _buyer) internal {
+        require(!isBuyerExist(_buyer), "Buyer exists");
+        bytes32[] memory _allInsuranceKeys;
+        bytes32[] memory _allFlightKeys;
+        buyers[_buyer] = Buyer({
+            credits:0, isExist:true, 
+            allInsuranceKeys:_allInsuranceKeys,
+            allFlightKeys:_allFlightKeys
+        });
+    }
+
+    modifier autoAddBuyer(address _buyer){
+        if(!isBuyerExist(_buyer)){
+            addBuyer(_buyer);
+        }
+        _;
+    }
+
+    function appendInsurance(address _buyer, bytes32 _insuranceKey) public autoAddBuyer(_buyer){
         buyers[_buyer].allInsuranceKeys.push(_insuranceKey);
     }
 
-    function addBuyer(address _buyer) public {
-        require(!isBuyerExist(_buyer), "Buyer exists");
-        bytes32[] memory _allInsuranceKeys;
-        buyers[_buyer] = Buyer({credits:0, isExist:true, allInsuranceKeys:_allInsuranceKeys});
+    function appendFlight(address _buyer, bytes32 _flightKey) public autoAddBuyer(_buyer){
+        buyers[_buyer].allFlightKeys.push(_flightKey);
     }
 
     function addCreditsToBuyer(address _buyer, uint256 _credits) public requireBuyerExist(_buyer){
@@ -41,11 +58,15 @@ contract BuyerData is Authorizable{
         buyers[_buyer].credits = 0;
     }
 
-    function queryBuyerInsuranceKeys(address _buyer) public view returns(bytes32[] memory){
+    function queryBuyerInsuranceKeys(address _buyer) public view requireBuyerExist(_buyer) returns(bytes32[] memory){
         return buyers[_buyer].allInsuranceKeys;
     }
 
-    function queryBuyerCredit(address _buyer) public view returns(uint256){
+    function queryBuyerFlightKeys(address _buyer) public view requireBuyerExist(_buyer) returns(bytes32[] memory){
+        return buyers[_buyer].allInsuranceKeys;
+    }
+
+    function queryBuyerCredit(address _buyer) public view requireBuyerExist(_buyer) returns(uint256){
         return buyers[_buyer].credits;
     }
 }

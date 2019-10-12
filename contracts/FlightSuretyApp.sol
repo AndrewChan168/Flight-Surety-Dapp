@@ -7,6 +7,7 @@ import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract FlightSuretyApp is OracleManagement, Operational{
     using SafeMath for uint256;
     FlightSuretyDataInterface flightSuretyData;
+    BuyerDataInterface buyerData;
     address private contractOwner;
     //address private suretyDataAddress;
     
@@ -20,9 +21,10 @@ contract FlightSuretyApp is OracleManagement, Operational{
     event FlightStatusInfo(address airline, string flight, uint256 timestamp, uint8 status);
     event WithdrawCredits(address passenager, uint256 credits);
 
-    constructor(address dataContractAddress) public{
+    constructor(address dataContractAddress, address buyerContractAddress) public{
         //suretyDataAddress = dataContractAddress;
         flightSuretyData = FlightSuretyDataInterface(dataContractAddress);
+        buyerData = BuyerDataInterface(buyerContractAddress);
         contractOwner = msg.sender;
     }
 
@@ -51,22 +53,33 @@ contract FlightSuretyApp is OracleManagement, Operational{
         //return msg.sender;
     }
 
+    /*
     function generateFlightKey(string memory _code, uint256 _timestamp) public returns(bytes32){
         return flightSuretyData.generateFlightKey(_code, _timestamp);
     }
+    */
 
-    function passenagerBuyInsurance(bytes32 _flightKey, uint256 _contractTimestamp, address _airline) public payable{
-        flightSuretyData.registerInsurance(msg.sender, _flightKey, _contractTimestamp, _airline, msg.value);
+    function passenagerBuyInsurance(bytes32 _flightKey, address _airline) public payable{
+        flightSuretyData.registerInsurance(msg.sender, _flightKey, _airline, msg.value);
+        buyerData.appendFlight(msg.sender, _flightKey);
+        bytes32 _insuranceKey = flightSuretyData.generateInsuranceKey(msg.sender, _flightKey);
+        buyerData.appendInsurance(msg.sender, _insuranceKey);
         //registerInsurance(address _buyer, bytes32 _flightKey, uint256 _contractTimestamp, address _airline, uint256 _fee) external
     }
 
     //address _buyer, bytes32 _flightKey, uint256 _contractTimestamp
+    /*
     function generateInsuranceKey(address _buyer, bytes32 _flightKey, uint256 _contractTimestamp) public returns(bytes32){
         return flightSuretyData.generateInsuranceKey(_buyer, _flightKey, _contractTimestamp);
     }
+    */
 
     function creditInsurance(bytes32 _insuranceKey) public{
+        address _buyer = flightSuretyData.queryInsuranceBuyer(_insuranceKey);
         flightSuretyData.creditInsurance(_insuranceKey);
+        uint256 _fee = flightSuretyData.queryInsuranceFee(_insuranceKey);
+        uint256 _credits = flightSuretyData.calculateCredits(_fee);
+        buyerData.addCreditsToBuyer(_buyer, _credits);
     }
 
     function creditAllInsurances(bytes32 _flightKey) public{
@@ -77,9 +90,9 @@ contract FlightSuretyApp is OracleManagement, Operational{
     }
 
     function passenagerWithdrawCredits() public payable{
-        uint256 credits = flightSuretyData.queryBuyerCredit(msg.sender);
+        uint256 credits = buyerData.queryBuyerCredit(msg.sender);
         require(queryContractBalance()>credits, "Application's ether is not enough");
-        flightSuretyData.deductCredits(msg.sender);
+        buyerData.deductCredits(msg.sender);
         msg.sender.transfer(credits);
         emit WithdrawCredits(msg.sender, credits);
     }
@@ -189,18 +202,30 @@ contract FlightSuretyDataInterface{
     function couldFund(address _candidate) external returns(bool);
     function addFund(address _airline, uint256 _fund) external;
     function registerFlight(string calldata _code, uint256 _timestamp, address _airline) external;
-    function registerInsurance(address _buyer, bytes32 _flightKey, uint256 _contractTimestamp, address _airline, uint256 _fee) external;
+    function registerInsurance(address _buyer, bytes32 _flightKey, address _airline, uint256 _fee) external;
+    function calculateCredits(uint256 fee) external returns(uint256);
     function creditInsurance(bytes32 _insuranceKey) external returns(uint256);
     function deductInsurance(bytes32 _insuranceKey, address _airline) external returns(uint256);
     function queryInsuranceBuyer(bytes32 _insuranceKey) external returns(address);
+    function queryInsuranceFee(bytes32 _insuranceKey) external returns(uint256);
     function generateFlightKey(string calldata flightCode, uint256 timestamp) external returns(bytes32);
-    function generateInsuranceKey(address _buyer, bytes32 _flightKey, uint256 _contractTimestamp) external returns(bytes32);
+    function generateInsuranceKey(address _buyer, bytes32 _flightKey) external returns(bytes32);
     function getInsuranceKeysList(bytes32 flightKey) external returns(bytes32[] memory);
     function setInsuranceWithdrawn(bytes32 insuranceKey) external;
     function setInsuranceExpired(bytes32 insuranceKey) external;
-    function queryBuyerCredit(address _buyer) external returns(uint256);
-    function deductCredits(address _buyer) external;
+    //function queryBuyerCredit(address _buyer) external returns(uint256);
+    //function deductCredits(address _buyer) external;
     function setFlightOnTime(bytes32 _flightID) external;
     function setFlightLateAirline(bytes32 _flightID) external;
     function setFlightLateNotAirline(bytes32 _flightID) external; 
+}
+
+contract BuyerDataInterface{
+    function appendInsurance(address _buyer, bytes32 _insuranceKey) external;
+    function appendFlight(address _buyer, bytes32 _flightKey) external;
+    function addCreditsToBuyer(address _buyer, uint256 _credits) external;
+    function deductCredits(address _buyer) external;
+    function queryBuyerInsuranceKeys(address _buyer) external returns(bytes32[] memory);
+    function queryBuyerFlightKeys(address _buyer) external returns(bytes32[] memory);
+    function queryBuyerCredit(address _buyer) external returns(uint256);
 }
