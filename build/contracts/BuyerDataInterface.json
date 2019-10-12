@@ -1,245 +1,20 @@
 {
-  "contractName": "FlightSuretyDataInterface",
+  "contractName": "BuyerDataInterface",
   "abi": [
     {
       "constant": false,
       "inputs": [
         {
-          "name": "_name",
-          "type": "string"
-        },
-        {
-          "name": "_airline",
-          "type": "address"
-        }
-      ],
-      "name": "registerAirline",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "_candidate",
-          "type": "address"
-        },
-        {
-          "name": "_voter",
-          "type": "address"
-        }
-      ],
-      "name": "vote",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "_candidate",
-          "type": "address"
-        }
-      ],
-      "name": "couldFund",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "_airline",
-          "type": "address"
-        },
-        {
-          "name": "_fund",
-          "type": "uint256"
-        }
-      ],
-      "name": "addFund",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "_code",
-          "type": "string"
-        },
-        {
-          "name": "_timestamp",
-          "type": "uint256"
-        },
-        {
-          "name": "_airline",
-          "type": "address"
-        }
-      ],
-      "name": "registerFlight",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
           "name": "_buyer",
           "type": "address"
         },
         {
-          "name": "_flightKey",
+          "name": "_insuranceKey",
           "type": "bytes32"
-        },
-        {
-          "name": "_airline",
-          "type": "address"
-        },
-        {
-          "name": "_fee",
-          "type": "uint256"
         }
       ],
-      "name": "registerInsurance",
+      "name": "appendInsurance",
       "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "fee",
-          "type": "uint256"
-        }
-      ],
-      "name": "calculateCredits",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "_insuranceKey",
-          "type": "bytes32"
-        }
-      ],
-      "name": "creditInsurance",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "_insuranceKey",
-          "type": "bytes32"
-        },
-        {
-          "name": "_airline",
-          "type": "address"
-        }
-      ],
-      "name": "deductInsurance",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "_insuranceKey",
-          "type": "bytes32"
-        }
-      ],
-      "name": "queryInsuranceBuyer",
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "_insuranceKey",
-          "type": "bytes32"
-        }
-      ],
-      "name": "queryInsuranceFee",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "flightCode",
-          "type": "string"
-        },
-        {
-          "name": "timestamp",
-          "type": "uint256"
-        }
-      ],
-      "name": "generateFlightKey",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bytes32"
-        }
-      ],
       "payable": false,
       "stateMutability": "nonpayable",
       "type": "function"
@@ -256,13 +31,8 @@
           "type": "bytes32"
         }
       ],
-      "name": "generateInsuranceKey",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bytes32"
-        }
-      ],
+      "name": "appendFlight",
+      "outputs": [],
       "payable": false,
       "stateMutability": "nonpayable",
       "type": "function"
@@ -271,11 +41,43 @@
       "constant": false,
       "inputs": [
         {
-          "name": "flightKey",
-          "type": "bytes32"
+          "name": "_buyer",
+          "type": "address"
+        },
+        {
+          "name": "_credits",
+          "type": "uint256"
         }
       ],
-      "name": "getInsuranceKeysList",
+      "name": "addCreditsToBuyer",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_buyer",
+          "type": "address"
+        }
+      ],
+      "name": "deductCredits",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_buyer",
+          "type": "address"
+        }
+      ],
+      "name": "queryBuyerInsuranceKeys",
       "outputs": [
         {
           "name": "",
@@ -290,12 +92,17 @@
       "constant": false,
       "inputs": [
         {
-          "name": "insuranceKey",
-          "type": "bytes32"
+          "name": "_buyer",
+          "type": "address"
         }
       ],
-      "name": "setInsuranceWithdrawn",
-      "outputs": [],
+      "name": "queryBuyerFlightKeys",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32[]"
+        }
+      ],
       "payable": false,
       "stateMutability": "nonpayable",
       "type": "function"
@@ -304,60 +111,23 @@
       "constant": false,
       "inputs": [
         {
-          "name": "insuranceKey",
-          "type": "bytes32"
+          "name": "_buyer",
+          "type": "address"
         }
       ],
-      "name": "setInsuranceExpired",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
+      "name": "queryBuyerCredit",
+      "outputs": [
         {
-          "name": "_flightID",
-          "type": "bytes32"
+          "name": "",
+          "type": "uint256"
         }
       ],
-      "name": "setFlightOnTime",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "_flightID",
-          "type": "bytes32"
-        }
-      ],
-      "name": "setFlightLateAirline",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "_flightID",
-          "type": "bytes32"
-        }
-      ],
-      "name": "setFlightLateNotAirline",
-      "outputs": [],
       "payable": false,
       "stateMutability": "nonpayable",
       "type": "function"
     }
   ],
-  "metadata": "{\"compiler\":{\"version\":\"0.5.8+commit.23d335f2\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":false,\"inputs\":[{\"name\":\"_insuranceKey\",\"type\":\"bytes32\"},{\"name\":\"_airline\",\"type\":\"address\"}],\"name\":\"deductInsurance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_name\",\"type\":\"string\"},{\"name\":\"_airline\",\"type\":\"address\"}],\"name\":\"registerAirline\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_buyer\",\"type\":\"address\"},{\"name\":\"_flightKey\",\"type\":\"bytes32\"},{\"name\":\"_airline\",\"type\":\"address\"},{\"name\":\"_fee\",\"type\":\"uint256\"}],\"name\":\"registerInsurance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_candidate\",\"type\":\"address\"},{\"name\":\"_voter\",\"type\":\"address\"}],\"name\":\"vote\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_candidate\",\"type\":\"address\"}],\"name\":\"couldFund\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_flightID\",\"type\":\"bytes32\"}],\"name\":\"setFlightLateAirline\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"fee\",\"type\":\"uint256\"}],\"name\":\"calculateCredits\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_buyer\",\"type\":\"address\"},{\"name\":\"_flightKey\",\"type\":\"bytes32\"}],\"name\":\"generateInsuranceKey\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"flightCode\",\"type\":\"string\"},{\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"generateFlightKey\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_code\",\"type\":\"string\"},{\"name\":\"_timestamp\",\"type\":\"uint256\"},{\"name\":\"_airline\",\"type\":\"address\"}],\"name\":\"registerFlight\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_insuranceKey\",\"type\":\"bytes32\"}],\"name\":\"queryInsuranceBuyer\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"insuranceKey\",\"type\":\"bytes32\"}],\"name\":\"setInsuranceWithdrawn\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"insuranceKey\",\"type\":\"bytes32\"}],\"name\":\"setInsuranceExpired\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"flightKey\",\"type\":\"bytes32\"}],\"name\":\"getInsuranceKeysList\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32[]\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_flightID\",\"type\":\"bytes32\"}],\"name\":\"setFlightLateNotAirline\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_airline\",\"type\":\"address\"},{\"name\":\"_fund\",\"type\":\"uint256\"}],\"name\":\"addFund\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_insuranceKey\",\"type\":\"bytes32\"}],\"name\":\"creditInsurance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_flightID\",\"type\":\"bytes32\"}],\"name\":\"setFlightOnTime\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_insuranceKey\",\"type\":\"bytes32\"}],\"name\":\"queryInsuranceFee\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/C/Users/andrewchan88/Documents/Coding/udacity/Blockchain/PartB/homework/project7_es_rm/contracts/FlightSuretyApp.sol\":\"FlightSuretyDataInterface\"},\"evmVersion\":\"petersburg\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/C/Users/andrewchan88/Documents/Coding/udacity/Blockchain/PartB/homework/project7_es_rm/contracts/FlightSuretyApp.sol\":{\"keccak256\":\"0xa4fbb706f583730093bc6367a319d5292511997bfe362803bbed8186b8a137fa\",\"urls\":[\"bzzr://323494c2428d7c919a878d64958ac43edffa18949b378230494a1d71df80b68b\"]},\"/C/Users/andrewchan88/Documents/Coding/udacity/Blockchain/PartB/homework/project7_es_rm/contracts/Operational.sol\":{\"keccak256\":\"0x7e9136640a1a93e1e42b6cceab883766ac89347f4b319ca10f1bf490fdce586e\",\"urls\":[\"bzzr://4e0ea4480bf873c5fec4d328ae18f6f51cc2a36b44b099460f07715c005ffe85\"]},\"/C/Users/andrewchan88/Documents/Coding/udacity/Blockchain/PartB/homework/project7_es_rm/contracts/OracleManagement.sol\":{\"keccak256\":\"0xb4e45cd263052ff3de165a079965e4902d56b3e158cf59e22d26a25736c6564c\",\"urls\":[\"bzzr://5ca0179e4c15479f307308e8b8e9501d6505b767f7cf654835820e59f96e6504\"]},\"/C/Users/andrewchan88/Documents/Coding/udacity/Blockchain/PartB/homework/project7_es_rm/node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x4ccf2d7b51873db1ccfd54ca2adae5eac3b184f9699911ed4490438419f1c690\",\"urls\":[\"bzzr://1604f5b6d6e916c154efd8c6720cda069e5ba32dfa0a9dedf2b42e5b02d07f89\"]}},\"version\":1}",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.8+commit.23d335f2\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":false,\"inputs\":[{\"name\":\"_buyer\",\"type\":\"address\"}],\"name\":\"deductCredits\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_buyer\",\"type\":\"address\"}],\"name\":\"queryBuyerCredit\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_buyer\",\"type\":\"address\"}],\"name\":\"queryBuyerInsuranceKeys\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32[]\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_buyer\",\"type\":\"address\"},{\"name\":\"_insuranceKey\",\"type\":\"bytes32\"}],\"name\":\"appendInsurance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_buyer\",\"type\":\"address\"}],\"name\":\"queryBuyerFlightKeys\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32[]\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_buyer\",\"type\":\"address\"},{\"name\":\"_flightKey\",\"type\":\"bytes32\"}],\"name\":\"appendFlight\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_buyer\",\"type\":\"address\"},{\"name\":\"_credits\",\"type\":\"uint256\"}],\"name\":\"addCreditsToBuyer\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/C/Users/andrewchan88/Documents/Coding/udacity/Blockchain/PartB/homework/project7_es_rm/contracts/FlightSuretyApp.sol\":\"BuyerDataInterface\"},\"evmVersion\":\"petersburg\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/C/Users/andrewchan88/Documents/Coding/udacity/Blockchain/PartB/homework/project7_es_rm/contracts/FlightSuretyApp.sol\":{\"keccak256\":\"0xa4fbb706f583730093bc6367a319d5292511997bfe362803bbed8186b8a137fa\",\"urls\":[\"bzzr://323494c2428d7c919a878d64958ac43edffa18949b378230494a1d71df80b68b\"]},\"/C/Users/andrewchan88/Documents/Coding/udacity/Blockchain/PartB/homework/project7_es_rm/contracts/Operational.sol\":{\"keccak256\":\"0x7e9136640a1a93e1e42b6cceab883766ac89347f4b319ca10f1bf490fdce586e\",\"urls\":[\"bzzr://4e0ea4480bf873c5fec4d328ae18f6f51cc2a36b44b099460f07715c005ffe85\"]},\"/C/Users/andrewchan88/Documents/Coding/udacity/Blockchain/PartB/homework/project7_es_rm/contracts/OracleManagement.sol\":{\"keccak256\":\"0xb4e45cd263052ff3de165a079965e4902d56b3e158cf59e22d26a25736c6564c\",\"urls\":[\"bzzr://5ca0179e4c15479f307308e8b8e9501d6505b767f7cf654835820e59f96e6504\"]},\"/C/Users/andrewchan88/Documents/Coding/udacity/Blockchain/PartB/homework/project7_es_rm/node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x4ccf2d7b51873db1ccfd54ca2adae5eac3b184f9699911ed4490438419f1c690\",\"urls\":[\"bzzr://1604f5b6d6e916c154efd8c6720cda069e5ba32dfa0a9dedf2b42e5b02d07f89\"]}},\"version\":1}",
   "bytecode": "0x",
   "deployedBytecode": "0x",
   "sourceMap": "",
@@ -21854,7 +21624,7 @@
   },
   "networks": {},
   "schemaVersion": "3.0.13",
-  "updatedAt": "2019-10-12T07:26:27.331Z",
+  "updatedAt": "2019-10-12T07:26:27.212Z",
   "devdoc": {
     "methods": {}
   },
