@@ -22,6 +22,9 @@ web3.eth.getAccounts()
                 .getAllOracles().call({from:accounts[0]});
     })
     .then(async(oracles)=>{
+        for(let i=0; i<oracles.length; i++){
+            console.log(`${i+1} oracle: ${oracles[i]}`);
+        }
         console.log(`Listening to ${Config.ws} for OracleRequest event`);
         flightSuretyApp.events.OracleRequest()
             .on('data', async(event)=>{
@@ -30,36 +33,47 @@ web3.eth.getAccounts()
                 var oracleIndexes;
                 var estimateGas;
                 var randomStatusCode;
+                randomStatusCode = randomItem([10,20,50]);
                 for(let i=0; i<oracles.length; i++){
                     oracleIndexes = await flightSuretyApp.methods
                                             .getMyIndexes()
                                             .call({from:oracles[i]});
+                    //console.log(`Fetch Index:${event.returnValues.index.toNumber()} vs Oracle Indexes:${oracleIndexes}, for ${i+1} oracle `);
+                    console.log(`The status code sunmitted from oracles for ${event.returnValues.flight}-${parseInt(event.returnValues.flightTimestamp)}:${randomStatusCode}`);
+                    console.log(`The fetch timestamp - ${parseInt(event.returnValues.fetchTimestamp)}`);
+                    console.log(`Fetch Index:${parseInt(event.returnValues.index)} vs Oracle Indexes:${oracleIndexes}, for ${i+1}-th oracle `);
                     for(let idx=0; idx<oracleIndexes.length; idx++){
-                        if(oracleIndexes[idx]==event.fetchIndex){
-                            randomStatusCode = randomItem([0,10,20,30,40,50]);
-                            estimateGas = await flightSuretyApp.methods
+                        if(oracleIndexes[idx]===event.returnValues.index){
+                            try{
+                                estimateGas = await flightSuretyApp.methods
                                             .submitOracleResponse(
-                                                event.returnValues.fetchIndex,
+                                                parseInt(event.returnValues.index),
                                                 event.returnValues.airline,
-                                                event.returnValues.flightCode,
-                                                event.returnValues.flightTimestamp,
+                                                event.returnValues.flight,
+                                                parseInt(event.returnValues.flightTimestamp),
+                                                parseInt(event.returnValues.fetchTimestamp),
                                                 randomStatusCode
                                             )
                                             .estimateGas({from:oracles[i]});
                             
                             await flightSuretyApp.methods
                                     .submitOracleResponse(
-                                        event.returnValues.fetchIndex,
+                                        parseInt(event.returnValues.index),
                                         event.returnValues.airline,
-                                        event.returnValues.flightCode,
-                                        event.returnValues.flightTimestamp,
+                                        event.returnValues.flight,
+                                        parseInt(event.returnValues.flightTimestamp),
+                                        parseInt(event.returnValues.fetchTimestamp),
                                         randomStatusCode
                                     )
                                     .send({from:oracles[i],gas:estimateGas+10000,gasPrice:gasPrice});
+                            }catch(err){
+                                console.log(`Error when submitOracleResponse():${err.message}`);
+                            }
                         }
                     }
+                console.log(`Proceeded ${i+1}-oracle: ${oracles[i]}`);
                 }
             })
-            .on('error', console.error);
+            .on('error', (error)=>console.log(error.message));
     })
     .catch(err=>console.log(err.message));
