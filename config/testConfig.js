@@ -1,5 +1,6 @@
 var FlightSuretyApp = artifacts.require("FlightSuretyApp");
 var FlightSuretyData = artifacts.require("FlightSuretyData");
+var BuyerData = artifacts.require("BuyerData");
 var BigNumber = require('big-number');
 
 var Config = async function(accounts) {
@@ -23,7 +24,8 @@ var Config = async function(accounts) {
     let firstAirline = accounts[1];
 
     let flightSuretyData = await FlightSuretyData.new({from:owner});
-    let flightSuretyApp = await FlightSuretyApp.new(flightSuretyData.address, {from:owner});
+    let buyerData = await BuyerData.new({from:owner});
+    let flightSuretyApp = await FlightSuretyApp.new(flightSuretyData.address, buyerData.address, {from:owner});
     
     return {
         owner: owner,
@@ -31,6 +33,7 @@ var Config = async function(accounts) {
         weiMultiple: BigNumber(10).pow(18),
         testAddresses: testAddresses,
         flightSuretyData: flightSuretyData,
+        buyerData:buyerData,
         flightSuretyApp: flightSuretyApp
     }
 }
