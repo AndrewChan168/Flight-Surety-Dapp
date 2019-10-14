@@ -12,7 +12,10 @@ function flightStatusCodeToString(statusCode){
 
 function buyInsurance(inputJSON){
     let { flightKey,airline } = inputJSON;
-    $(`button #buy-${flightKey}`).toggleClass("btn btn-success btn small")
+    $(`#buy-${flightKey}`)
+        .removeClass("btn-outline-primary btn small")
+        .addClass("btn btn-success btn small")
+        .text("Bought");
 }
 
 function statusToBuyOption(flightKey, airline, statusCode){
@@ -30,9 +33,9 @@ function statusToBuyOption(flightKey, airline, statusCode){
 }
 
 function statusToFetchOption(flightKey, airline, statusCode){
-    if (statusCode==='10'){
+    if (statusCode==='0'){
         return(`
-            <td><button class="btn btn-outline-success btn small" value="${flightKey}">
+            <td><button class="btn btn-outline-success btn small" id="fetch-${flightKey}" value="${flightKey}">
                 Fetch Status
             </button></td>
         `)
@@ -121,9 +124,7 @@ function generateFlightsPage(owner){
     `);
 
     axios.get(`http://localhost:8000/flights/all/${owner}`)
-        .then(res=>{
-            generateFlightsTable(res.data, "all-flights-card-table", statusToBuyOption);
-        })
+        .then(res=>generateFlightsTable(res.data, "all-flights-card-table", statusToBuyOption))
         .catch(err=>console.log(`Error in fetching all flights: ${err.message}`));
     
     axios.get(`http://localhost:8000/flights/passenager/${owner}`)
