@@ -1,5 +1,6 @@
 var owner;
 var buyingFee;
+var socket=io("http://localhost:8000");
 
 function flightStatusCodeToString(statusCode){
     switch(statusCode){
@@ -10,18 +11,30 @@ function flightStatusCodeToString(statusCode){
     }
 }
 
-function buyInsurance(inputJSON){
-    let { flightKey,airline } = inputJSON;
-    $(`#buy-${flightKey}`)
+function buyInsurance(inputJSON_str){
+    let inputJSON = JSON.parse(inputJSON_str);
+    try{
+        axios.post("/insurances/buy", {
+            key:inputJSON.flightKey,
+            airline:inputJSON.airline,
+            sender:owner,
+            fee:'1'
+        })
+        .then(console.log);
+        
+    } catch (err){
+        console.log(`Error in buyInsurance function:${err.message}`);
+    }
+    $(`#buy-${inputJSON.flightKey}`)
         .removeClass("btn-outline-primary btn small")
         .addClass("btn btn-success btn small")
         .text("Bought");
 }
 
-function statusToBuyOption(flightKey, airline, statusCode){
+function statusToBuyOption(flightKey, airline, statusCode, flightCode, flightTimestamp){
     if (statusCode==='0'){
         return(`
-            <td><button class="btn btn-outline-primary btn small" id="buy-${flightKey}" value="{flightKey:${flightKey}, airline:${airline}}" href=# onclick="buyInsurance(this.value)">
+            <td><button class="btn btn-outline-primary btn small" id="buy-${flightKey}" value='{"flightKey":"${flightKey}", "airline":"${airline}"}' href=# onclick="buyInsurance(this.value)">
                 Buy
             </button></td>
         `)
@@ -32,10 +45,27 @@ function statusToBuyOption(flightKey, airline, statusCode){
     }
 }
 
-function statusToFetchOption(flightKey, airline, statusCode){
+function fetchStatus(inputJSON_str){
+    let inputJSON = JSON.parse(inputJSON_str);
+    try{
+        axios.post("http://localhost:8000/flights/fetch",{
+            sender:owner,
+            airline:inputJSON.airline,
+            flightCode:inputJSON.flightCode,
+            flightTimestamp:parseInt(inputJSON.flightTimestamp),
+            fetchTimestamp:Math.floor(Date.now())
+        })
+        .then(console.log);
+    }catch(err){
+        console.log(`Error on fetchStatus function:${err.message}`);
+    }
+}
+
+function statusToFetchOption(flightKey, airline, statusCode, flightCode, flightTimestamp){
     if (statusCode==='0'){
         return(`
-            <td><button class="btn btn-outline-success btn small" id="fetch-${flightKey}" value="${flightKey}">
+            <td><button class="btn btn-outline-success btn small" id="fetch-${flightKey}" href=# onclick="fetchStatus(this.value)"
+                        value='{"flightKey":"${flightKey}", "airline":"${airline}", "statusCode":"${statusCode}", "flightCode":"${flightCode}", "flightTimestamp":"${flightTimestamp}"}'>
                 Fetch Status
             </button></td>
         `)
@@ -54,7 +84,7 @@ function fillFlightsTableRow(flight, ajax_obj, action_func){
             <td value=${flight.timestamp}>${flight.timestamp}</td>
             <td value=${flight.airline}>${flight.airline}</td>
             ${flightStatusCodeToString(flight.status)}
-            ${action_func(flight.flightKey, flight.airline, flight.status)}
+            ${action_func(flight.flightKey, flight.airline, flight.status, flight.code, flight.timestamp)}
         </tr>
     `)
 }
@@ -64,6 +94,7 @@ function generateFlightsTable(flightsArray, tableName, action_func){
 }
 
 function generateFlightsPage(owner){
+    $(".navbar-text").text(owner);
     $('#html-main').empty();
 
     $('#html-main').append(`
@@ -84,7 +115,7 @@ function generateFlightsPage(owner){
                 <h5>Messages from FlightSurety</h5>
             </div>
             <div class="card-body text-left">
-                <p></p>
+                <p id="card-message"></p>
             </div>
         </div>
     `);
@@ -133,7 +164,7 @@ function generateFlightsPage(owner){
 }
 
 function insuranceStatusToString(statusCode){
-    console.log(`Insurance Status Code: ${statusCode}`);
+    //console.log(`Insurance Status Code: ${statusCode}`);
     switch(statusCode){
         case '1':return('<td class="bg-secondary text-white">Expired</td>');
         case '2':return('<td class="bg-warning text-white">Credited</td>');
@@ -143,13 +174,12 @@ function insuranceStatusToString(statusCode){
 }
 
 function fillInsurancesTableRow(insurance, ajax_obj){
-    //$("#all-flights-card-table > tbody").append(`
     ajax_obj.append(`
         <tr>
             <td>${insurance.insuranceKey}</td>
             <td>${insurance.flightKey}</td>
             <td>${insurance.fee}</td>
-            <td>${insurance.Credits}</td>
+            <td>${insurance.credits}</td>
             ${insuranceStatusToString(insurance.status)}
         </tr>
     `)
@@ -157,6 +187,10 @@ function fillInsurancesTableRow(insurance, ajax_obj){
 
 function generateInsurancesTable(insurancesArray, tableName){
     insurancesArray.forEach(insurance=>fillInsurancesTableRow(insurance, $(`#${tableName} > tbody`)));
+}
+
+function fillCredits(credit){
+    $('#card-credits-text').html(`${credit} <b>ether</b>`);
 }
 
 function generateInsurancesPage(owner){
@@ -179,7 +213,7 @@ function generateInsurancesPage(owner){
                         <h5>Messages from FlightSurety</h5>
                     </div>
                     <div class="card-body text-left scroll">
-                        <p></p>
+                        <p id="card-message"></p>
                     </div>
                 </div>
             </div>
@@ -210,14 +244,16 @@ function generateInsurancesPage(owner){
 
     axios.get(`http://localhost:8000/insurance/passenager/${owner}`)
     .then(res=>{
+        //console.log(res.data);
         generateInsurancesTable(res.data, "my-insurances-table");
     })
     .catch(err=>console.log(`Error in fetching all flights: ${err.message}`));
 
     axios.get(`http://localhost:8000/insurance/credits/fetch/${owner}`)
     .then(res=>{
-        console.log(`The credits is ${res.data}`);
-        $('#card-credits-text').html(`${res.data} <b>ether</b>`);
+        //console.log(`The credits is ${res.data}`);
+        //$('#card-credits-text').html(`${res.data} <b>ether</b>`);
+        fillCredits(res.data);
     })
     .catch(err=>{
         console.log(`Error in fetching passenager's credits: ${err.message}`);
@@ -225,6 +261,9 @@ function generateInsurancesPage(owner){
     });
 }
 
+function appendSocketMessage(msg){
+    $("#card-message").append(`${msg.event}<br>`);
+}
 
 $(document).ready(()=>{
     console.log(`Document is ready`);
@@ -235,9 +274,15 @@ $(document).ready(()=>{
             $(".navbar-text").text(res.data[0]);
             console.log(`Owner: ${owner}`);
             res.data.forEach(element => {
-                $('#passenagers-dropdown').append(`<a class="dropdown-item" href=#>${element}</a>`)
+                $('#passenagers-dropdown').append(`<a class="dropdown-item" href=# value="${element}" onclick="generateFlightsPage(owner)">${element}</a>`)
             });
             generateFlightsPage(owner);
         })
         .catch(err=>console.log(err.message));
+
+    socket.on('event emit', (msg)=>{
+        console.log(msg);
+        //console.log(msg.content);
+        appendSocketMessage(msg);
+    });
 })
