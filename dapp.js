@@ -85,6 +85,25 @@ app.get("/flights/all/:sender", async(req, res)=>{
     }
 });
 
+app.post("/flights/fetch", async(req, res)=>{
+    const cost = await flightSuretyApp.methods
+                        .fetchFlightStatus(
+                            req.body.airline, 
+                            req.body.flightCode, 
+                            req.body.flightTimestamp,
+                            req.body.fetchTimestamp
+                        )
+                        .estimateGas({from:req.body.sender});
+    await flightSuretyApp.methods
+            .fetchFlightStatus(
+                req.body.airline, 
+                req.body.flightCode, 
+                req.body.flightTimestamp,
+                req.body.fetchTimestamp
+            )
+            .send({from:req.body.sender,gas:cost+5000, gasPrice:gasPrice});
+});
+
 app.get("/flights/passenager/:sender", async(req, res)=>{
     var allFlights = [];
     try{
@@ -115,14 +134,12 @@ app.post("/insurances/buy", async (req, res)=>{
     console.log("buy insurance for flight");
     try{
         const feeWei = web3.utils.toWei(req.body.fee, 'ether');
-        const key = await flightSuretyData.methods
-                            .generateFlightKey(req.body.flightCode, req.body.flightTimestamp)
-                            .call({from:res.body.sender});
+        console.log(req.body);
         const cost = await flightSuretyApp.methods
-                                .passenagerBuyInsurance(key,req.body.airline)
+                                .passenagerBuyInsurance(req.body.key, req.body.airline)
                                 .estimateGas({from:req.body.sender, value:feeWei});
         await flightSuretyApp.methods
-                .passenagerBuyInsurance(key,req.body.airline)
+                .passenagerBuyInsurance(req.body.key,req.body.airline)
                 .send({from:req.body.sender, value:feeWei, gas:cost+5000, gasPrice:gasPrice});
         res.status(200).send({result:true});
     } catch(err){
@@ -134,21 +151,22 @@ app.get("/insurance/passenager/:sender", async(req, res)=>{
     var allInsurances = [];
     try{
         const keys = await buyerData.methods
-                            .queryBuyerFlightKeys(req.params.sender)
+                            .queryBuyerInsuranceKeys(req.params.sender)
                             .call({from:req.params.sender});
         for(let i=0; i<keys.length; i++){
             let insurance = await flightSuretyData.methods
                                     .queryInsuranceInfo(keys[i])
                                     .call({from:req.params.sender});
+            console.log(insurance);
             allInsurances.push({
                 insuranceKey:keys[i],
                 buyer:insurance.buyer,
                 flightKey:insurance.flightKey,
                 airline:insurance.airline,
-                fee:insurance.fee,
-                credits:insurance.credits,
+                fee:web3.utils.fromWei(insurance.fee),
+                credits:web3.utils.fromWei(insurance.credits),
                 status:insurance.insuranceStatus
-            })
+            });
         }
         res.status(200).send(allInsurances);
     } catch(err){
@@ -158,7 +176,7 @@ app.get("/insurance/passenager/:sender", async(req, res)=>{
 
 app.get("/insurance/credits/fetch/:sender", async(req, res)=>{
     try{
-        const credits = await flightSuretyData.methods
+        const credits = await buyerData.methods
                                 .queryBuyerCredit(req.params.sender)
                                 .call({from:req.params.sender});
         res.status(200).send(credits);
