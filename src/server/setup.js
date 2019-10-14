@@ -164,6 +164,20 @@ let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, Config.appAddre
                                     .getAllOracles()
                                     .call({from:accounts[0]});
         console.log(`Number of Oracles: ${allOracles.length}`);
+
+        flightKey = await flightSuretyData.methods
+                            .generateFlightKey('AX0101', 20191005)
+                            .call({from:accounts[0]});
+        estimateGas = await flightSuretyApp.methods
+                                .passenagerBuyInsurance(flightKey,accounts[0])
+                                .estimateGas({from:accounts[31], value:web3.utils.toWei('0.5', 'ether')});
+        await flightSuretyApp.methods
+                .passenagerBuyInsurance(flightKey,accounts[0])
+                .send({
+                        from:accounts[31], value:web3.utils.toWei('0.5', 'ether'),
+                        gasPrice:gasPrice, gas:estimateGas+10000
+                })
+        console.log(`Passenager-${accounts[31]} buy insurance for flight-${flightKey}`);
     }catch(err){
         console.log(err.message);
     }
