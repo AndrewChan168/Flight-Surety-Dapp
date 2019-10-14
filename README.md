@@ -88,7 +88,7 @@ migrate --reset
    > Total cost:           0.2314476 ETH
 ```
 
-Then copy the contract addresses (FlightSuretyData & FlightSuretyApp & BuyerData) to /src/config.json. The json should be:
+Then copy the contract addresses (FlightSuretyData & FlightSuretyApp & BuyerData) to `/src/config.json`. The json should be:
 ```
 {
     "url": "http://localhost:8545",
