@@ -2,7 +2,7 @@
 Flight-Surety Dapp is the 7-th Project for Udacity Nanadegree - Blockchain developer. It is a blockchain smart contract that allows for purchasing insurance on airline flights. Including a browser UI allowing for simple contact interaction.
 
 ### Install
-***
+<hr>
 There are smart contracts written in Solidity and could be tested with Truffle. The dapp works as server interacting with deployed smart contracts and supporting browser UI.
 
 Before installation of node packages, please check that Truffle is installed in your machine.
