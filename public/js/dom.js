@@ -1,7 +1,26 @@
 var owner;
 var buyingFee;
 var socket=io("http://localhost:8000");
+/**
+ * Functions that support Single-Page UI. There are 3 pages and 1 fixed navigator bar.
+ * User could browse the page by clicking on item on navigator bar. 
+ * Navigator bar has 1 drop-down menu and text area. 
+ *  The text area displaying the passenager you are using.
+ *  The Passenagers drop-down menu allows you to switch from different passenager
+ * 
+ * Flights Page: Showing all available flights and passenager's flights. It also provide flight status fetching function
+ * Insurance Page: Showing all insurances of the passenager and provide button for withdrawing credits
+ * Airline Page: Showing all registered airlines status and their fund
+ * 
+ * The default page is Flight page. Switching passenagr would also returning to the default page
+ */
 
+
+ /**
+  * functions generating Flight page
+  */
+
+// function supporting switching color of status column according to flight status 
 function flightStatusCodeToString(statusCode){
     switch(statusCode){
         case '0': return('<td><p class="text-primary">PENDING</p></td>');
