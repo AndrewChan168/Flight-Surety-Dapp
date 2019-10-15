@@ -106,7 +106,7 @@ Then copy the contract addresses (FlightSuretyData & FlightSuretyApp & BuyerData
 The Oracle simulating would automatically: 
 1. Register 4 airlines (and all these 4 airlines would fund 15 ethers)
 2. Add 6 flights
-3. 1 passenager (the default passenager in UI) would buy insurance for flight AX0101
-4. 30 oracles would be registered
+3. Buy insurance on flight AX0101 for 1 passenager (the default passenager in UI)
+4. Register 30 oracles who will submit oracle responses for flight status
 
 
