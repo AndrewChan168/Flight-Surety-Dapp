@@ -132,3 +132,4 @@ In new browser, input `http://localhost:8000` .
 
 ## Some features of UI
 ***
+The feature of JQuery interacting wiht websocket is not completed. Press `[F5]` button after you press `buy` and `fetched` button on UI. 
