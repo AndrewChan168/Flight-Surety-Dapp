@@ -100,13 +100,35 @@ Then copy the contract addresses (FlightSuretyData & FlightSuretyApp & BuyerData
     "contractOwner":"0xe45cf0cd14dd5d5b4cf807813544eee2987212f1"
 }
 ```
-
-## Start Oracle simulating server
+## Startup the Dapp
+### Step-1: Start Oracle simulating server
 ***
-The Oracle simulating would automatically: 
+All the code of oracle simulating server would be in `/src/server/server.js`. The Oracle simulating would automatically: 
 1. Register 4 airlines (and all these 4 airlines would fund 15 ethers)
 2. Add 6 flights
 3. Buy insurance on flight AX0101 for 1 passenager (the default passenager in UI)
 4. Register 30 oracles who will submit oracle responses for flight status
 
+To start the oracle simulating server, turn on new terminal and go to directory `src/server`. Then,
 
+```
+node server.js
+```
+
+Command line would show up the status of setting up simulating data. If all succeed, you would find below on command line:
+```
+Listening to ws://localhost:8545 for OracleRequest event
+```
+
+### Step-2: start web service server
+***
+To set up web servers supporting UI, turn on terminal and use below command in the root of project,
+```
+node server.js
+```
+
+### Step-3: Browing the UI for buying insurance
+In new browser, input `http://localhost:8000` .
+
+## Some features of UI
+***
