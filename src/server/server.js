@@ -1,8 +1,10 @@
 const Config = require("../../src/config.json");
 const FlightSuretyApp = require("../../build/contracts/FlightSuretyApp.json");
+
 const Web3 = require("web3");
 const randomItem = require('random-item');
 
+/** use web-socket version web3 */
 let web3 = new Web3(new Web3.providers.WebsocketProvider(Config.ws));
 
 let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, Config.appAddress);
@@ -10,7 +12,12 @@ let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, Config.appAddre
 const gasPrice = web3.utils.toWei('0.00001', 'ether');
 
 /**
- * Setup for simulating the whole insurance cycle
+ * A one-off function that prepares data for demonstration.
+ * It would automatically:
+ * 1. Register 4 airlines (and all these 4 airlines would fund 15 ethers)
+ * 2. Add 6 flights
+ * 3. Buy insurance on flight AX0101 for 1 passenager (the default passenager in UI)
+ * 4. Register 30 oracles who will submit oracle responses for flight status
  */
 
 (async ()=>{
@@ -24,12 +31,15 @@ const gasPrice = web3.utils.toWei('0.00001', 'ether');
         var accountBalance;
         var isAuthor;
         
+        /** Set the authors for FlightSuretyData & BuyerData smart contracts */
         await flightSuretyData.methods
                 .addAuthorizedCaller(flightSuretyApp.options.address)
                 .send({from:accounts[0]});
         await buyerData.methods
                 .addAuthorizedCaller(flightSuretyApp.options.address)
                 .send({from:accounts[0]});
+
+        /** check if authors were set up correctly */
         isAuthor = await flightSuretyData.methods
                             .isAuthorizedCaller(flightSuretyApp.options.address)
                             .call({from:accounts[0]})
@@ -38,6 +48,8 @@ const gasPrice = web3.utils.toWei('0.00001', 'ether');
                             .isAuthorizedCaller(flightSuretyApp.options.address)
                             .call({from:accounts[0]})
         console.log(`Is FlightSuretyApp author of FlightSuretyData: ${isAuthor}`);
+
+        /** Register 4 airlines */
         estimateGas = await flightSuretyApp.methods
                                 .registerAirline('Airline-01')
                                 .estimateGas({from:accounts[0]});
@@ -60,6 +72,7 @@ const gasPrice = web3.utils.toWei('0.00001', 'ether');
                                     .call({from:accounts[0]});
         console.log(`Number of registered airlines: ${airlinesNum}`);
         
+        /** Let 4 registered airline to fund */
         estimateGas = await flightSuretyApp.methods
                                 .airlineFund()
                                 .estimateGas({from:accounts[1],value:web3.utils.toWei('15', 'ether')});
@@ -85,6 +98,7 @@ const gasPrice = web3.utils.toWei('0.00001', 'ether');
                         gas:estimateGas+10000,
                         value:web3.utils.toWei('15', 'ether')});
         
+        /** Check if airline fund successfully (one sample) */
         contractBalance = await flightSuretyApp.methods
                                     .queryContractBalance()
                                     .call({from:accounts[0]});
@@ -93,6 +107,8 @@ const gasPrice = web3.utils.toWei('0.00001', 'ether');
         estimateGas = await flightSuretyApp.methods
                                 .registerFlight('AX0101', 20191005)
                                 .estimateGas({from:accounts[1]});
+
+        /** Register 6 flights */
         console.log(`Estimated gas for registering flight: ${estimateGas}`);
         await flightSuretyApp.methods
                 .registerFlight('AX0101', 20191005)
@@ -147,6 +163,7 @@ const gasPrice = web3.utils.toWei('0.00001', 'ether');
                                 .estimateGas({from:accounts[11]});
         console.log(`Estimated gas for registering oracle: ${estimateGas}`);
         
+        /** Register 30 oracles */
         for (let i=11; i<=40; i++){
             estimateGas = await flightSuretyApp.methods
                                     .registerOracle()
@@ -168,6 +185,7 @@ const gasPrice = web3.utils.toWei('0.00001', 'ether');
                                     .call({from:accounts[0]});
         console.log(`Number of Oracles: ${allOracles.length}`);
 
+        /** Let the default passenager to buy insurance */
         flightKey = await flightSuretyData.methods
                             .generateFlightKey('AX0101', 20191005)
                             .call({from:accounts[0]});
@@ -188,7 +206,10 @@ const gasPrice = web3.utils.toWei('0.00001', 'ether');
 
 
 /**
- * Simulating Oracles to send responses 
+ * The web-socket server which simulates oracles responsing flight status once upon passenager fetching flight status.
+ * There are 30 oracles who will randomly response 3 status: 1) ON TIME or 2) LATE (AIRLINE) or 3) LATE (OTHER REASONS).
+ * Oracles are listening to OracleRequest event from FlightSuretyApp smart contract on URL: ws://localhost:8545.
+ * Once OracleRequest event has arrived, oracle feedback response by submitOracleResponse() method
  */
 
 web3.eth.getAccounts()
@@ -214,10 +235,11 @@ web3.eth.getAccounts()
                     oracleIndexes = await flightSuretyApp.methods
                                             .getMyIndexes()
                                             .call({from:oracles[i]});
-                    //console.log(`Fetch Index:${event.returnValues.index.toNumber()} vs Oracle Indexes:${oracleIndexes}, for ${i+1} oracle `);
+                    /* // unused code (for debugging)
                     console.log(`The status code sunmitted from oracles for ${event.returnValues.flight}-${parseInt(event.returnValues.flightTimestamp)}:${randomStatusCode}`);
                     console.log(`The fetch timestamp - ${parseInt(event.returnValues.fetchTimestamp)}`);
                     console.log(`Fetch Index:${parseInt(event.returnValues.index)} vs Oracle Indexes:${oracleIndexes}, for ${i+1}-th oracle `);
+                    */
                     for(let idx=0; idx<oracleIndexes.length; idx++){
                         if(oracleIndexes[idx]===event.returnValues.index){
                             try{
