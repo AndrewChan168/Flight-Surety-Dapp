@@ -14,11 +14,12 @@ npm install
 
 ## Compile & Test the smart contracts
 ***
-
+To compile all smart contracts to JSON
 ```
 truffle compile
 ```
 
+To test all smart contracts
 ```
 truffle test
 ```
@@ -30,7 +31,7 @@ truffle test
 
 ```
 truffle develop
-
+// inside truffle console
 migrate --reset
 
 
@@ -99,3 +100,13 @@ Then copy the contract addresses (FlightSuretyData & FlightSuretyApp & BuyerData
     "contractOwner":"0xe45cf0cd14dd5d5b4cf807813544eee2987212f1"
 }
 ```
+
+## Start Oracle simulating server
+***
+The Oracle simulating would automatically: 
+- 1. Register 4 airlines (and all these 4 airlines would fund 15 ethers)
+- 2. Add 6 flights
+- 3. 1 passenager (the default passenager in UI) would buy insurance for flight AX0101
+- 4. 30 oracles would be registered
+
+
